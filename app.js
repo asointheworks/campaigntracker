@@ -1201,6 +1201,7 @@ function initCharacterForm() {
 
         CampaignData.save(data);
         renderCharacters();
+        loadPCsForInitiative(); // Refresh initiative tracker PC list
         closeModal('character-modal');
     });
 }
@@ -1216,6 +1217,7 @@ function deleteCharacter() {
         CampaignData.save(data);
         CampaignData.addActivity('🗑️', `Deleted character: "${character?.name}"`);
         renderCharacters();
+        loadPCsForInitiative(); // Refresh initiative tracker PC list
         closeModal('character-modal');
     }
 }
