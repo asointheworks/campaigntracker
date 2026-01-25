@@ -25,11 +25,14 @@
                 <button class="nav-btn" data-section="party">
                     <span class="nav-icon">⚔️</span> Party
                 </button>
-                <button class="nav-btn" data-section="stories">
-                    <span class="nav-icon">📜</span> Stories
+                <button class="nav-btn" data-section="pc-tales">
+                    <span class="nav-icon">📜</span> PC Tales!
                 </button>
-                <button class="nav-btn" data-section="dm-notes">
-                    <span class="nav-icon">📖</span> DM Notes
+                <button class="nav-btn" data-section="campaign-notes">
+                    <span class="nav-icon">📖</span> Campaign Notes
+                </button>
+                <button class="nav-btn" data-section="initiative">
+                    <span class="nav-icon">⚡</span> Initiative
                 </button>
                 <button class="nav-btn" data-section="rules">
                     <span class="nav-icon">⚖️</span> Rules
@@ -234,40 +237,102 @@
             </div>
         </section>
 
-        <!-- Stories Section -->
-        <section id="stories" class="content-section">
+        <!-- PC Tales Section -->
+        <section id="pc-tales" class="content-section">
             <div class="section-header">
-                <h2>Stories & Chronicles</h2>
-                <p class="section-subtitle">Tales from the City of Splendors</p>
-                <button class="btn btn-primary" onclick="openStoryModal()">+ New Story</button>
+                <h2>PC Tales!</h2>
+                <p class="section-subtitle">Player Chronicles & Party Resources</p>
+                <button class="btn btn-primary" onclick="openTaleModal()">+ New Entry</button>
             </div>
 
-            <div class="stories-container">
-                <div class="story-filters">
-                    <button class="filter-btn active" data-filter="all">All</button>
-                    <button class="filter-btn" data-filter="session">Session Recaps</button>
-                    <button class="filter-btn" data-filter="backstory">Backstories</button>
-                    <button class="filter-btn" data-filter="journal">Character Journals</button>
-                    <button class="filter-btn" data-filter="lore">Lore</button>
+            <div class="pc-tales-container">
+                <div class="tales-tabs">
+                    <button class="tab-btn active" data-tab="journals">
+                        <span class="tab-icon">📔</span> IC Logs & Journals
+                    </button>
+                    <button class="tab-btn" data-tab="evidence">
+                        <span class="tab-icon">🔍</span> Evidence & Documents
+                    </button>
+                    <button class="tab-btn" data-tab="resources">
+                        <span class="tab-icon">💰</span> Shared Resources
+                    </button>
+                    <button class="tab-btn" data-tab="misc">
+                        <span class="tab-icon">📦</span> Other
+                    </button>
                 </div>
 
-                <div class="stories-grid" id="stories-grid">
-                    <!-- Sample Story -->
-                    <article class="story-card" data-type="session">
-                        <div class="story-header">
-                            <span class="story-type-badge session">Session Recap</span>
-                            <span class="story-date">Session 0</span>
+                <!-- IC Logs & Journals Tab -->
+                <div class="tab-content active" id="journals">
+                    <div class="notes-toolbar">
+                        <button class="btn btn-primary" onclick="openTaleModal('journal')">+ Add Journal Entry</button>
+                    </div>
+                    <div class="tales-grid" id="journals-grid">
+                        <!-- Journals rendered dynamically -->
+                    </div>
+                </div>
+
+                <!-- Evidence & Documents Tab -->
+                <div class="tab-content" id="evidence">
+                    <div class="notes-toolbar">
+                        <button class="btn btn-primary" onclick="openTaleModal('evidence')">+ Add Evidence</button>
+                    </div>
+                    <div class="evidence-list" id="evidence-list">
+                        <!-- Evidence rendered dynamically -->
+                    </div>
+                </div>
+
+                <!-- Shared Resources Tab -->
+                <div class="tab-content" id="resources">
+                    <div class="notes-toolbar">
+                        <button class="btn btn-primary" onclick="openResourceModal()">+ Add Resource</button>
+                    </div>
+                    <div class="resources-grid" id="resources-grid">
+                        <div class="resource-card">
+                            <div class="resource-header">
+                                <h4>💰 Party Gold</h4>
+                                <button class="btn btn-small" onclick="editResource('gold')">Edit</button>
+                            </div>
+                            <div class="resource-value" id="party-gold-resource">0 gp</div>
+                            <div class="resource-notes" id="gold-notes">Track party treasury here</div>
                         </div>
-                        <h3 class="story-title">The Gathering Storm</h3>
-                        <p class="story-author">By: Dungeon Master</p>
-                        <p class="story-preview">Five strangers arrive in Waterdeep during the tail end of summer, each drawn by their own reasons to the City of Splendors. Fate - or perhaps something more deliberate - will soon bring them together...</p>
-                        <div class="story-footer">
-                            <button class="btn btn-small" onclick="openStoryView(0)">Read More</button>
-                            <div class="story-stats">
-                                <span>📖 1,234 words</span>
+                        <div class="resource-card">
+                            <div class="resource-header">
+                                <h4>🎒 Party Inventory</h4>
+                                <button class="btn btn-small" onclick="editResource('inventory')">Edit</button>
+                            </div>
+                            <div class="resource-content" id="party-inventory">
+                                <p><em>No shared items yet</em></p>
                             </div>
                         </div>
-                    </article>
+                        <div class="resource-card">
+                            <div class="resource-header">
+                                <h4>🏠 Party Property</h4>
+                                <button class="btn btn-small" onclick="editResource('property')">Edit</button>
+                            </div>
+                            <div class="resource-content" id="party-property">
+                                <p><em>No properties acquired</em></p>
+                            </div>
+                        </div>
+                        <div class="resource-card">
+                            <div class="resource-header">
+                                <h4>👥 Contacts & Allies</h4>
+                                <button class="btn btn-small" onclick="editResource('contacts')">Edit</button>
+                            </div>
+                            <div class="resource-content" id="party-contacts">
+                                <p><em>No notable contacts yet</em></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other Tab -->
+                <div class="tab-content" id="misc">
+                    <div class="notes-toolbar">
+                        <button class="btn btn-primary" onclick="openTaleModal('misc')">+ Add Entry</button>
+                    </div>
+                    <div class="misc-list" id="misc-list">
+                        <!-- Misc items rendered dynamically -->
+                    </div>
                 </div>
             </div>
 
@@ -292,20 +357,23 @@
             </div>
         </section>
 
-        <!-- DM Notes Section -->
-        <section id="dm-notes" class="content-section">
+        <!-- Campaign Notes Section -->
+        <section id="campaign-notes" class="content-section">
             <div class="section-header">
-                <h2>Dungeon Master's Notes</h2>
+                <h2>Campaign Notes</h2>
                 <p class="section-subtitle">Behind the Screen</p>
             </div>
 
-            <div class="dm-notes-container">
+            <div class="campaign-notes-container">
                 <div class="notes-tabs">
-                    <button class="tab-btn active" data-tab="ic-notes">
-                        <span class="tab-icon">🎭</span> In-Character Notes
+                    <button class="tab-btn active" data-tab="ooc-notes">
+                        <span class="tab-icon">📋</span> OOC Notes
                     </button>
-                    <button class="tab-btn" data-tab="ooc-notes">
-                        <span class="tab-icon">📋</span> Out-of-Character Notes
+                    <button class="tab-btn" data-tab="dm-notes-tab">
+                        <span class="tab-icon">🎲</span> DM Notes
+                    </button>
+                    <button class="tab-btn" data-tab="session-summaries">
+                        <span class="tab-icon">📝</span> Session Summaries
                     </button>
                     <button class="tab-btn" data-tab="npcs">
                         <span class="tab-icon">👥</span> NPCs
@@ -318,30 +386,8 @@
                     </button>
                 </div>
 
-                <!-- IC Notes Tab -->
-                <div class="tab-content active" id="ic-notes">
-                    <div class="notes-toolbar">
-                        <button class="btn btn-primary" onclick="addICNote()">+ Add IC Note</button>
-                    </div>
-                    <div class="notes-list" id="ic-notes-list">
-                        <div class="note-card ic">
-                            <div class="note-header">
-                                <h4>The Yawning Portal Atmosphere</h4>
-                                <span class="note-date">Session 1</span>
-                            </div>
-                            <div class="note-content">
-                                <p><em>"The common room buzzes with the usual crowd - adventurers nursing ales and wounds alike, merchants conducting quiet business in shadowed corners, and the ever-present rumble of Durnan's gravelly voice keeping order. The great well in the center of the room - the entrance to Undermountain itself - seems to pulse with an almost hungry energy tonight..."</em></p>
-                            </div>
-                            <div class="note-tags">
-                                <span class="tag">atmosphere</span>
-                                <span class="tag">yawning portal</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- OOC Notes Tab -->
-                <div class="tab-content" id="ooc-notes">
+                <div class="tab-content active" id="ooc-notes">
                     <div class="notes-toolbar">
                         <button class="btn btn-primary" onclick="addOOCNote()">+ Add OOC Note</button>
                     </div>
@@ -370,6 +416,38 @@
                                 <span class="tag">chapter 1</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- DM Notes Tab -->
+                <div class="tab-content" id="dm-notes-tab">
+                    <div class="notes-toolbar">
+                        <button class="btn btn-primary" onclick="addDMNote()">+ Add DM Note</button>
+                    </div>
+                    <div class="notes-list" id="dm-notes-list">
+                        <div class="note-card dm">
+                            <div class="note-header">
+                                <h4>The Yawning Portal Atmosphere</h4>
+                                <span class="note-date">Session 1</span>
+                            </div>
+                            <div class="note-content">
+                                <p><em>"The common room buzzes with the usual crowd - adventurers nursing ales and wounds alike, merchants conducting quiet business in shadowed corners, and the ever-present rumble of Durnan's gravelly voice keeping order. The great well in the center of the room - the entrance to Undermountain itself - seems to pulse with an almost hungry energy tonight..."</em></p>
+                            </div>
+                            <div class="note-tags">
+                                <span class="tag">atmosphere</span>
+                                <span class="tag">yawning portal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Summaries Tab -->
+                <div class="tab-content" id="session-summaries">
+                    <div class="notes-toolbar">
+                        <button class="btn btn-primary" onclick="addSessionSummary()">+ Add Session Summary</button>
+                    </div>
+                    <div class="notes-list" id="session-summaries-list">
+                        <!-- Session summaries will be rendered dynamically -->
                     </div>
                 </div>
 
@@ -419,6 +497,140 @@
                                     <span class="progress-text">Not Started</span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Initiative Tracker Section -->
+        <section id="initiative" class="content-section">
+            <div class="section-header">
+                <h2>Initiative Tracker</h2>
+                <p class="section-subtitle">Combat Management</p>
+            </div>
+
+            <div class="initiative-container">
+                <div class="initiative-controls">
+                    <button class="btn btn-primary" onclick="startNewEncounter()">🗡️ New Encounter</button>
+                    <button class="btn btn-secondary" onclick="sortByInitiative()">⬆️ Sort by Initiative</button>
+                    <button class="btn btn-secondary" onclick="nextTurn()">➡️ Next Turn</button>
+                    <button class="btn btn-danger" onclick="clearEncounter()">🗑️ Clear</button>
+                </div>
+
+                <div class="initiative-layout">
+                    <!-- PC Selection Panel -->
+                    <div class="initiative-panel pcs-panel">
+                        <div class="panel-header">
+                            <h3>⚔️ Player Characters</h3>
+                            <p class="panel-hint">Toggle PCs for this session</p>
+                        </div>
+                        <div class="pc-selection" id="pc-selection">
+                            <!-- PCs will be loaded from Party tab -->
+                        </div>
+                    </div>
+
+                    <!-- Initiative Order -->
+                    <div class="initiative-panel order-panel">
+                        <div class="panel-header">
+                            <h3>⚡ Initiative Order</h3>
+                            <span class="round-counter" id="round-counter">Round 1</span>
+                        </div>
+                        <div class="initiative-list" id="initiative-list">
+                            <div class="initiative-empty">
+                                <p>No combatants yet. Add PCs and NPCs to begin!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NPC Addition Panel -->
+                    <div class="initiative-panel npc-panel">
+                        <div class="panel-header">
+                            <h3>👹 Add NPC to Combat</h3>
+                        </div>
+                        <form id="combat-npc-form" class="combat-npc-form">
+                            <div class="form-group">
+                                <label for="combat-npc-name">Name</label>
+                                <input type="text" id="combat-npc-name" placeholder="e.g., Goblin 1, Bandit Leader">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="combat-npc-init">Initiative</label>
+                                    <input type="number" id="combat-npc-init" placeholder="Roll" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="combat-npc-hp">HP</label>
+                                    <input type="number" id="combat-npc-hp" placeholder="Max HP" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="combat-npc-ac">AC</label>
+                                    <input type="number" id="combat-npc-ac" placeholder="AC" min="1">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="combat-npc-saves">Saving Throws</label>
+                                <input type="text" id="combat-npc-saves" placeholder="e.g., STR +3, DEX +2, CON +1">
+                            </div>
+                            <div class="form-group">
+                                <label for="combat-npc-skills">Skills</label>
+                                <input type="text" id="combat-npc-skills" placeholder="e.g., Stealth +4, Perception +2">
+                            </div>
+                            <div class="form-group">
+                                <label for="combat-npc-spells">Spells/Abilities</label>
+                                <textarea id="combat-npc-spells" rows="2" placeholder="e.g., Fireball (3/day), Multiattack"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="combat-npc-notes">Notes</label>
+                                <textarea id="combat-npc-notes" rows="2" placeholder="Resistances, vulnerabilities, tactics..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Add to Combat</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Combatant Details (shows when selecting a combatant) -->
+                <div class="combatant-details" id="combatant-details" style="display: none;">
+                    <div class="details-header">
+                        <h3 id="detail-name">Combatant Name</h3>
+                        <button class="btn btn-small" onclick="closeCombatantDetails()">×</button>
+                    </div>
+                    <div class="details-content">
+                        <div class="details-stats">
+                            <div class="stat-box">
+                                <span class="stat-label">HP</span>
+                                <div class="hp-control">
+                                    <button onclick="adjustHP(-1)">-</button>
+                                    <span id="detail-hp">0/0</span>
+                                    <button onclick="adjustHP(1)">+</button>
+                                </div>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">AC</span>
+                                <span id="detail-ac">10</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">Init</span>
+                                <span id="detail-init">0</span>
+                            </div>
+                        </div>
+                        <div class="details-section">
+                            <h4>Saving Throws</h4>
+                            <p id="detail-saves">-</p>
+                        </div>
+                        <div class="details-section">
+                            <h4>Skills</h4>
+                            <p id="detail-skills">-</p>
+                        </div>
+                        <div class="details-section">
+                            <h4>Spells/Abilities</h4>
+                            <p id="detail-spells">-</p>
+                        </div>
+                        <div class="details-section">
+                            <h4>Notes</h4>
+                            <p id="detail-notes">-</p>
+                        </div>
+                        <div class="details-actions">
+                            <button class="btn btn-danger" onclick="removeCombatant()">Remove from Combat</button>
                         </div>
                     </div>
                 </div>
@@ -916,35 +1128,39 @@
     </main>
 
     <!-- Modals -->
-    <!-- Story Modal -->
-    <div id="story-modal" class="modal">
+    <!-- Tale Modal (PC Tales) -->
+    <div id="tale-modal" class="modal">
         <div class="modal-content large">
             <div class="modal-header">
-                <h3 id="story-modal-title">New Story</h3>
-                <button class="modal-close" onclick="closeModal('story-modal')">&times;</button>
+                <h3 id="tale-modal-title">New Entry</h3>
+                <button class="modal-close" onclick="closeModal('tale-modal')">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="story-form">
+                <form id="tale-form">
+                    <input type="hidden" id="tale-edit-id">
                     <div class="form-group">
-                        <label for="story-title-input">Title</label>
-                        <input type="text" id="story-title-input" required>
+                        <label for="tale-title-input">Title</label>
+                        <input type="text" id="tale-title-input" required>
                     </div>
                     <div class="form-group">
-                        <label for="story-type-select">Type</label>
-                        <select id="story-type-select">
-                            <option value="session">Session Recap</option>
-                            <option value="backstory">Backstory</option>
-                            <option value="journal">Character Journal</option>
-                            <option value="lore">Lore</option>
+                        <label for="tale-type-select">Type</label>
+                        <select id="tale-type-select">
+                            <option value="journal">IC Log / Journal Entry</option>
+                            <option value="evidence">Evidence / Document</option>
+                            <option value="misc">Other</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="story-author-input">Author</label>
-                        <input type="text" id="story-author-input" required>
+                        <label for="tale-author-input">Author / Source</label>
+                        <input type="text" id="tale-author-input" placeholder="Character name or source">
+                    </div>
+                    <div class="form-group">
+                        <label for="tale-session-input">Session / Date</label>
+                        <input type="text" id="tale-session-input" placeholder="e.g., Session 1, Day 3">
                     </div>
                     <div class="form-group">
                         <label>Content</label>
-                        <div class="rich-editor" id="story-content-editor">
+                        <div class="rich-editor" id="tale-content-editor">
                             <div class="editor-toolbar">
                                 <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
                                 <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
@@ -956,12 +1172,101 @@
                                 <button type="button" onclick="formatText('formatBlock', 'h3')" title="Heading">H</button>
                                 <button type="button" onclick="formatText('formatBlock', 'blockquote')" title="Quote">"</button>
                             </div>
-                            <div class="editor-content" id="story-content-input" contenteditable="true" data-placeholder="Write your story here..."></div>
+                            <div class="editor-content" id="tale-content-input" contenteditable="true" data-placeholder="Write your entry here..."></div>
                         </div>
                     </div>
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Save Story</button>
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('story-modal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Entry</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('tale-modal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource Edit Modal -->
+    <div id="resource-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="resource-modal-title">Edit Resource</h3>
+                <button class="modal-close" onclick="closeModal('resource-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="resource-form">
+                    <input type="hidden" id="resource-type-input">
+                    <div class="form-group" id="resource-value-group" style="display: none;">
+                        <label for="resource-value-input">Value</label>
+                        <input type="number" id="resource-value-input" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Content</label>
+                        <div class="rich-editor" id="resource-content-editor">
+                            <div class="editor-toolbar">
+                                <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                <span class="toolbar-divider"></span>
+                                <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                            </div>
+                            <div class="editor-content" id="resource-content-input" contenteditable="true" data-placeholder="Update the resource details..."></div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('resource-modal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Summary Modal -->
+    <div id="session-summary-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>New Session Summary</h3>
+                <button class="modal-close" onclick="closeModal('session-summary-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="session-summary-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="summary-session-input">Session Number</label>
+                            <input type="number" id="summary-session-input" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="summary-date-input">Date Played</label>
+                            <input type="date" id="summary-date-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="summary-title-input">Session Title</label>
+                        <input type="text" id="summary-title-input" placeholder="e.g., The Ambush on the High Road">
+                    </div>
+                    <div class="form-group">
+                        <label>Summary</label>
+                        <div class="rich-editor" id="summary-content-editor">
+                            <div class="editor-toolbar">
+                                <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                <span class="toolbar-divider"></span>
+                                <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                                <span class="toolbar-divider"></span>
+                                <button type="button" onclick="formatText('formatBlock', 'h4')" title="Heading">H</button>
+                            </div>
+                            <div class="editor-content" id="summary-content-input" contenteditable="true" data-placeholder="What happened this session?"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="summary-xp-input">XP Earned</label>
+                        <input type="number" id="summary-xp-input" min="0" placeholder="0">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Summary</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('session-summary-modal')">Cancel</button>
                     </div>
                 </form>
             </div>
