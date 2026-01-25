@@ -1780,3 +1780,286 @@ a:hover {
     scrollbar-width: thin;
     scrollbar-color: rgba(212, 175, 55, 0.3) var(--primary-dark);
 }
+
+/* ===================================
+   Rich Text Editor
+   =================================== */
+
+.rich-editor {
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.editor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    background: rgba(212, 175, 55, 0.1);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.editor-toolbar button {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: var(--radius-sm);
+    color: var(--parchment);
+    cursor: pointer;
+    font-size: 0.85rem;
+    min-width: 32px;
+    transition: all 0.2s ease;
+}
+
+.editor-toolbar button:hover {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: var(--accent-gold);
+}
+
+.editor-toolbar button:active {
+    background: rgba(212, 175, 55, 0.3);
+}
+
+.toolbar-divider {
+    width: 1px;
+    background: rgba(212, 175, 55, 0.3);
+    margin: 0 var(--spacing-xs);
+}
+
+.editor-content {
+    min-height: 150px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: var(--spacing-md);
+    color: var(--parchment);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+.editor-content:focus {
+    outline: none;
+}
+
+.editor-content:empty:before {
+    content: attr(data-placeholder);
+    color: rgba(244, 228, 188, 0.4);
+    font-style: italic;
+}
+
+.editor-content h3,
+.editor-content h4 {
+    color: var(--accent-gold);
+    margin: var(--spacing-md) 0 var(--spacing-sm);
+}
+
+.editor-content ul,
+.editor-content ol {
+    margin-left: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+}
+
+.editor-content li {
+    margin-bottom: var(--spacing-xs);
+}
+
+.editor-content blockquote {
+    border-left: 3px solid var(--accent-gold);
+    padding-left: var(--spacing-md);
+    margin: var(--spacing-md) 0;
+    font-style: italic;
+    color: var(--parchment-dark);
+}
+
+.synopsis-editor-content {
+    min-height: 200px;
+}
+
+.rule-editor-content {
+    min-height: 300px;
+}
+
+/* ===================================
+   Character Type Toggle
+   =================================== */
+
+.type-toggle {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.toggle-btn {
+    flex: 1;
+    min-width: 150px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    border-radius: var(--radius-md);
+    color: var(--parchment);
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.toggle-btn:hover {
+    border-color: var(--accent-gold);
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.toggle-btn.active {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+    box-shadow: var(--shadow-glow);
+}
+
+.toggle-icon {
+    font-size: 1.2rem;
+}
+
+/* ===================================
+   Character Cards with PC/NPC Badges
+   =================================== */
+
+.character-filters {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-xl);
+    justify-content: center;
+}
+
+.character-card {
+    position: relative;
+}
+
+.character-type-badge {
+    position: absolute;
+    top: var(--spacing-md);
+    left: var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    z-index: 1;
+}
+
+.character-type-badge.pc {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+}
+
+.character-type-badge.npc {
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    color: white;
+}
+
+/* Form Rows for Character Modal */
+.form-row {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.form-row .form-group {
+    flex: 1;
+    min-width: 120px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.form-actions-right {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    font-weight: 600;
+}
+
+.btn-danger:hover {
+    box-shadow: 0 0 20px rgba(231, 76, 60, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Character card edit/delete buttons */
+.char-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
+}
+
+.char-actions .btn {
+    flex: 1;
+}
+
+/* Empty state for party grid */
+.party-empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--spacing-2xl);
+    color: var(--parchment-dark);
+}
+
+.party-empty-state .empty-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.5;
+}
+
+.party-empty-state h3 {
+    margin-bottom: var(--spacing-md);
+    color: var(--accent-gold);
+}
+
+.party-empty-state p {
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Character Notes Indicator */
+.char-notes-indicator {
+    font-size: 0.8rem;
+    color: var(--parchment-dark);
+    margin-top: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+/* Responsive adjustments for form rows */
+@media (max-width: 600px) {
+    .form-row {
+        flex-direction: column;
+    }
+
+    .form-row .form-group {
+        min-width: 100%;
+    }
+
+    .type-toggle {
+        flex-direction: column;
+    }
+
+    .toggle-btn {
+        min-width: 100%;
+    }
+}

@@ -23,7 +23,23 @@ const CampaignData = {
             sessionNotes: "",
             synopsis: ""
         },
-        characters: [],
+        characters: [
+            {
+                id: 1,
+                type: 'npc',
+                name: 'Krak',
+                raceClass: 'Human Barbarian',
+                player: '',
+                level: 3,
+                currentHp: 35,
+                maxHp: 35,
+                ac: 14,
+                initiative: '+1',
+                portrait: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80',
+                background: '<p>Krak is a gruff but kindhearted <strong>caravan leader</strong> who has traversed the Sword Coast countless times. Despite his intimidating appearance, he has a deep love for animals - especially oxen.</p><p>He was <em>devastated</em> by the loss of <strong>Petunia the Ox</strong> during a goblin ambush on the road to Waterdeep. Petunia had been his loyal companion for over eight years, and her death has left him seeking both vengeance and purpose.</p><p>Krak now frequents the Yawning Portal, drowning his sorrows and looking for adventurers who might help him track down the goblins responsible.</p>',
+                createdAt: new Date().toISOString()
+            }
+        ],
         stories: [
             {
                 id: 0,
@@ -353,7 +369,13 @@ function openStoryView(storyId) {
     document.getElementById('story-view-type').className = `story-type-badge ${story.type}`;
     document.getElementById('story-view-author').textContent = `By: ${story.author}`;
     document.getElementById('story-view-date').textContent = story.date;
-    document.getElementById('story-view-content').innerHTML = story.content.split('\n').map(p => `<p>${p}</p>`).join('');
+
+    // Handle both HTML content and plain text
+    if (story.content.includes('<') && story.content.includes('>')) {
+        document.getElementById('story-view-content').innerHTML = story.content;
+    } else {
+        document.getElementById('story-view-content').innerHTML = story.content.split('\n').map(p => `<p>${p}</p>`).join('');
+    }
 
     openModal('story-view-modal');
 }
@@ -363,20 +385,27 @@ function initStoryForm() {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
 
+        const contentEditor = document.getElementById('story-content-input');
+        const contentHtml = contentEditor.innerHTML;
+        const contentText = contentEditor.textContent || contentEditor.innerText;
+
         const newStory = {
             id: Date.now(),
             title: document.getElementById('story-title-input').value,
             type: document.getElementById('story-type-select').value,
             author: document.getElementById('story-author-input').value,
             date: new Date().toLocaleDateString(),
-            content: document.getElementById('story-content-input').value,
-            wordCount: document.getElementById('story-content-input').value.split(/\s+/).length,
+            content: contentHtml,
+            wordCount: contentText.split(/\s+/).filter(w => w.length > 0).length,
             createdAt: new Date().toISOString()
         };
 
         const data = CampaignData.get();
         data.stories.push(newStory);
         CampaignData.save(data);
+
+        // Clear the editor
+        contentEditor.innerHTML = '';
 
         renderStories();
         CampaignData.addActivity('📜', `New story added: "${newStory.title}"`);
@@ -388,23 +417,26 @@ function renderStories() {
     const grid = document.getElementById('stories-grid');
     const data = CampaignData.get();
 
-    grid.innerHTML = data.stories.map(story => `
-        <article class="story-card" data-type="${story.type}">
-            <div class="story-header">
-                <span class="story-type-badge ${story.type}">${story.type.charAt(0).toUpperCase() + story.type.slice(1)}</span>
-                <span class="story-date">${story.date}</span>
-            </div>
-            <h3 class="story-title">${story.title}</h3>
-            <p class="story-author">By: ${story.author}</p>
-            <p class="story-preview">${story.content.substring(0, 200)}...</p>
-            <div class="story-footer">
-                <button class="btn btn-small" onclick="openStoryView(${story.id})">Read More</button>
-                <div class="story-stats">
-                    <span>📖 ${story.wordCount || 0} words</span>
+    grid.innerHTML = data.stories.map(story => {
+        const plainText = stripHtml(story.content);
+        return `
+            <article class="story-card" data-type="${story.type}">
+                <div class="story-header">
+                    <span class="story-type-badge ${story.type}">${story.type.charAt(0).toUpperCase() + story.type.slice(1)}</span>
+                    <span class="story-date">${story.date}</span>
                 </div>
-            </div>
-        </article>
-    `).join('');
+                <h3 class="story-title">${story.title}</h3>
+                <p class="story-author">By: ${story.author}</p>
+                <p class="story-preview">${plainText.substring(0, 200)}${plainText.length > 200 ? '...' : ''}</p>
+                <div class="story-footer">
+                    <button class="btn btn-small" onclick="openStoryView(${story.id})">Read More</button>
+                    <div class="story-stats">
+                        <span>📖 ${story.wordCount || 0} words</span>
+                    </div>
+                </div>
+            </article>
+        `;
+    }).join('');
 }
 
 // ===================================
@@ -431,11 +463,13 @@ function initNoteForm() {
         e.preventDefault();
 
         const noteType = document.getElementById('note-type-hidden').value;
+        const contentEditor = document.getElementById('note-content-input');
+
         const newNote = {
             id: Date.now(),
             title: document.getElementById('note-title-input').value,
             session: document.getElementById('note-session-input').value,
-            content: document.getElementById('note-content-input').value,
+            content: contentEditor.innerHTML,
             tags: document.getElementById('note-tags-input').value.split(',').map(t => t.trim()).filter(t => t)
         };
 
@@ -446,6 +480,9 @@ function initNoteForm() {
             data.oocNotes.push(newNote);
         }
         CampaignData.save(data);
+
+        // Clear the editor
+        contentEditor.innerHTML = '';
 
         renderNotes();
         CampaignData.addActivity(noteType === 'ic' ? '🎭' : '📋', `New ${noteType.toUpperCase()} note: "${newNote.title}"`);
@@ -465,7 +502,7 @@ function renderNotes() {
                 <span class="note-date">${note.session}</span>
             </div>
             <div class="note-content">
-                ${note.content.split('\n').map(p => `<p>${p}</p>`).join('')}
+                ${formatNoteContent(note.content)}
             </div>
             <div class="note-tags">
                 ${note.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
@@ -482,13 +519,22 @@ function renderNotes() {
                 <span class="note-date">${note.session}</span>
             </div>
             <div class="note-content">
-                ${note.content.split('\n').map(p => `<p>${p}</p>`).join('')}
+                ${formatNoteContent(note.content)}
             </div>
             <div class="note-tags">
                 ${note.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
             </div>
         </div>
     `).join('');
+}
+
+function formatNoteContent(content) {
+    // If content already has HTML tags, return as-is
+    if (content.includes('<') && content.includes('>')) {
+        return content;
+    }
+    // Otherwise, convert newlines to paragraphs
+    return content.split('\n').map(p => p.trim() ? `<p>${p}</p>` : '').join('');
 }
 
 // ===================================
@@ -899,24 +945,25 @@ function removeFile(fileId) {
 function toggleEditSynopsis() {
     const display = document.getElementById('synopsis-display');
     const edit = document.getElementById('synopsis-edit');
-    const textarea = document.getElementById('synopsis-textarea');
+    const editor = document.getElementById('synopsis-textarea');
 
     display.classList.toggle('hidden');
     edit.classList.toggle('hidden');
 
     if (!edit.classList.contains('hidden')) {
-        textarea.value = display.innerHTML;
+        editor.innerHTML = display.innerHTML;
+        editor.focus();
     }
 }
 
 function saveSynopsis() {
     const display = document.getElementById('synopsis-display');
-    const textarea = document.getElementById('synopsis-textarea');
+    const editor = document.getElementById('synopsis-textarea');
 
-    display.innerHTML = textarea.value;
+    display.innerHTML = editor.innerHTML;
 
     const data = CampaignData.get();
-    data.campaign.synopsis = textarea.value;
+    data.campaign.synopsis = editor.innerHTML;
     CampaignData.save(data);
 
     CampaignData.addActivity('📚', 'Campaign synopsis updated');
@@ -936,26 +983,27 @@ function toggleEditRules(ruleId) {
     const content = document.getElementById(`${ruleId}-content`) || document.getElementById(`rule-${ruleId}`).querySelector('.rule-content');
     const display = content.querySelector('.rule-display');
     const edit = content.querySelector('.rule-edit');
-    const textarea = content.querySelector('.rule-textarea');
+    const editor = content.querySelector('.editor-content');
 
     display.classList.toggle('hidden');
     edit.classList.toggle('hidden');
 
     if (!edit.classList.contains('hidden')) {
-        textarea.value = display.innerHTML;
+        editor.innerHTML = display.innerHTML;
+        editor.focus();
     }
 }
 
 function saveRules(ruleId) {
     const content = document.getElementById(`${ruleId}-content`) || document.getElementById(`rule-${ruleId}`).querySelector('.rule-content');
     const display = content.querySelector('.rule-display');
-    const textarea = content.querySelector('.rule-textarea');
+    const editor = content.querySelector('.editor-content');
 
-    display.innerHTML = textarea.value;
+    display.innerHTML = editor.innerHTML;
 
     const data = CampaignData.get();
     if (!data.rules) data.rules = {};
-    data.rules[ruleId] = textarea.value;
+    data.rules[ruleId] = editor.innerHTML;
     CampaignData.save(data);
 
     CampaignData.addActivity('⚖️', `Rules updated: ${ruleId}`);
@@ -999,12 +1047,230 @@ function loadSessionInfo() {
 }
 
 // ===================================
-// Character Modal (placeholder)
+// Rich Text Editor
 // ===================================
 
-function openCharacterModal(playerId) {
-    // For now, just show an alert - this could be expanded to a full character sheet
-    alert(`Character details for Player ${playerId} - Full character sheet feature coming soon!`);
+function formatText(command, value = null) {
+    document.execCommand(command, false, value);
+}
+
+// ===================================
+// Character Management
+// ===================================
+
+let currentEditingCharacterId = null;
+
+function openCharacterModal(characterId = null) {
+    const form = document.getElementById('character-form');
+    const title = document.getElementById('character-modal-title');
+    const deleteBtn = document.getElementById('delete-character-btn');
+    const backgroundEditor = document.getElementById('character-background-content');
+
+    // Reset form
+    form.reset();
+    backgroundEditor.innerHTML = '';
+    currentEditingCharacterId = null;
+
+    // Reset type toggle
+    document.querySelectorAll('.type-toggle .toggle-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.type === 'pc') btn.classList.add('active');
+    });
+    document.getElementById('character-type-input').value = 'pc';
+    document.getElementById('player-name-row').style.display = 'flex';
+
+    if (characterId) {
+        // Editing existing character
+        const data = CampaignData.get();
+        const character = data.characters.find(c => c.id === characterId);
+
+        if (character) {
+            currentEditingCharacterId = characterId;
+            title.textContent = 'Edit Character';
+            deleteBtn.style.display = 'block';
+
+            // Populate form
+            document.getElementById('character-edit-id').value = characterId;
+            document.getElementById('character-name-input').value = character.name;
+            document.getElementById('character-race-class-input').value = character.raceClass;
+            document.getElementById('character-player-input').value = character.player || '';
+            document.getElementById('character-level-input').value = character.level || 1;
+            document.getElementById('character-hp-current').value = character.currentHp || 10;
+            document.getElementById('character-hp-max').value = character.maxHp || 10;
+            document.getElementById('character-ac-input').value = character.ac || 10;
+            document.getElementById('character-init-input').value = character.initiative || '+0';
+            document.getElementById('character-portrait-input').value = character.portrait || '';
+            backgroundEditor.innerHTML = character.background || '';
+
+            // Set type toggle
+            setCharacterType(character.type || 'pc');
+        }
+    } else {
+        // New character
+        title.textContent = 'Add Character';
+        deleteBtn.style.display = 'none';
+    }
+
+    openModal('character-modal');
+}
+
+function setCharacterType(type) {
+    document.querySelectorAll('.type-toggle .toggle-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.type === type) btn.classList.add('active');
+    });
+    document.getElementById('character-type-input').value = type;
+
+    // Show/hide player name field based on type
+    const playerRow = document.getElementById('player-name-row');
+    if (type === 'npc') {
+        playerRow.querySelector('label[for="character-player-input"]').textContent = 'Controlled By (optional)';
+    } else {
+        playerRow.querySelector('label[for="character-player-input"]').textContent = 'Player Name';
+    }
+}
+
+function initCharacterForm() {
+    const form = document.getElementById('character-form');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const backgroundEditor = document.getElementById('character-background-content');
+        const characterData = {
+            id: currentEditingCharacterId || Date.now(),
+            type: document.getElementById('character-type-input').value,
+            name: document.getElementById('character-name-input').value,
+            raceClass: document.getElementById('character-race-class-input').value,
+            player: document.getElementById('character-player-input').value,
+            level: parseInt(document.getElementById('character-level-input').value) || 1,
+            currentHp: parseInt(document.getElementById('character-hp-current').value) || 10,
+            maxHp: parseInt(document.getElementById('character-hp-max').value) || 10,
+            ac: parseInt(document.getElementById('character-ac-input').value) || 10,
+            initiative: document.getElementById('character-init-input').value || '+0',
+            portrait: document.getElementById('character-portrait-input').value || getDefaultPortrait(document.getElementById('character-type-input').value),
+            background: backgroundEditor.innerHTML,
+            createdAt: currentEditingCharacterId ? undefined : new Date().toISOString()
+        };
+
+        const data = CampaignData.get();
+
+        if (currentEditingCharacterId) {
+            // Update existing character
+            const index = data.characters.findIndex(c => c.id === currentEditingCharacterId);
+            if (index !== -1) {
+                characterData.createdAt = data.characters[index].createdAt;
+                data.characters[index] = characterData;
+            }
+            CampaignData.addActivity('⚔️', `Updated character: "${characterData.name}"`);
+        } else {
+            // Add new character
+            data.characters.push(characterData);
+            CampaignData.addActivity('⚔️', `Added new ${characterData.type.toUpperCase()}: "${characterData.name}"`);
+        }
+
+        CampaignData.save(data);
+        renderCharacters();
+        closeModal('character-modal');
+    });
+}
+
+function deleteCharacter() {
+    if (!currentEditingCharacterId) return;
+
+    const data = CampaignData.get();
+    const character = data.characters.find(c => c.id === currentEditingCharacterId);
+
+    if (confirm(`Are you sure you want to delete "${character?.name}"? This cannot be undone.`)) {
+        data.characters = data.characters.filter(c => c.id !== currentEditingCharacterId);
+        CampaignData.save(data);
+        CampaignData.addActivity('🗑️', `Deleted character: "${character?.name}"`);
+        renderCharacters();
+        closeModal('character-modal');
+    }
+}
+
+function getDefaultPortrait(type) {
+    if (type === 'npc') {
+        return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80';
+    }
+    return 'https://images.unsplash.com/photo-1589254065878-42c9da997008?w=400&q=80';
+}
+
+function renderCharacters(filter = 'all') {
+    const grid = document.getElementById('party-grid');
+    const data = CampaignData.get();
+
+    let characters = data.characters;
+
+    // Apply filter
+    if (filter !== 'all') {
+        characters = characters.filter(c => c.type === filter);
+    }
+
+    if (characters.length === 0) {
+        grid.innerHTML = `
+            <div class="party-empty-state">
+                <div class="empty-icon">⚔️</div>
+                <h3>No Characters Yet</h3>
+                <p>Add your first character to get started!</p>
+                <button class="btn btn-primary" onclick="openCharacterModal()">+ Add Character</button>
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = characters.map(char => {
+        const hpPercent = Math.round((char.currentHp / char.maxHp) * 100);
+        const hpColor = hpPercent > 50 ? '#27ae60' : hpPercent > 25 ? '#f39c12' : '#e74c3c';
+
+        return `
+            <div class="character-card" data-character-id="${char.id}" data-type="${char.type}">
+                <span class="character-type-badge ${char.type}">${char.type.toUpperCase()}</span>
+                <div class="character-portrait">
+                    <img src="${char.portrait || getDefaultPortrait(char.type)}" alt="${char.name}" class="portrait-img" onerror="this.src='${getDefaultPortrait(char.type)}'">
+                    <div class="level-badge">Lvl ${char.level}</div>
+                </div>
+                <div class="character-info">
+                    <h3 class="char-name">${char.name}</h3>
+                    <p class="char-race-class">${char.raceClass}</p>
+                    ${char.player ? `<p class="char-player">${char.type === 'pc' ? 'Player' : 'Controlled by'}: ${char.player}</p>` : ''}
+                    <div class="char-stats">
+                        <div class="hp-bar">
+                            <div class="hp-fill" style="width: ${hpPercent}%; background: linear-gradient(90deg, ${hpColor}, ${hpColor}dd)"></div>
+                            <span class="hp-text">HP: ${char.currentHp}/${char.maxHp}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="mini-stat">AC: ${char.ac}</span>
+                            <span class="mini-stat">Init: ${char.initiative}</span>
+                        </div>
+                    </div>
+                    <div class="char-background">
+                        <p class="background-text">${stripHtml(char.background).substring(0, 150)}${char.background && char.background.length > 150 ? '...' : ''}</p>
+                    </div>
+                </div>
+                <div class="char-actions">
+                    <button class="btn btn-small" onclick="openCharacterModal(${char.id})">Edit</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function stripHtml(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+    return tmp.textContent || tmp.innerText || '';
+}
+
+function initCharacterFilters() {
+    const filters = document.querySelectorAll('.character-filters .filter-btn');
+    filters.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filters.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderCharacters(btn.dataset.filter);
+        });
+    });
 }
 
 // ===================================
@@ -1057,6 +1323,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initModals();
     initFileUpload();
     initContentEditable();
+    initCharacterFilters();
 
     // Initialize forms
     initStoryForm();
@@ -1065,8 +1332,10 @@ document.addEventListener('DOMContentLoaded', () => {
     initLocationForm();
     initQuestForm();
     initImageForm();
+    initCharacterForm();
 
     // Render initial data
+    renderCharacters();
     renderStories();
     renderNotes();
     renderNPCs();
@@ -1110,3 +1379,6 @@ window.saveRules = saveRules;
 window.cancelEditRules = cancelEditRules;
 window.saveSessionInfo = saveSessionInfo;
 window.openCharacterModal = openCharacterModal;
+window.setCharacterType = setCharacterType;
+window.deleteCharacter = deleteCharacter;
+window.formatText = formatText;
