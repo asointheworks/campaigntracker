@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waterdeep: Dragon Heist - Campaign Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="dragon-icon">🐉</div>
+                <div class="title-group">
+                    <h1>Waterdeep: Dragon Heist</h1>
+                    <span class="subtitle">D&D 2024 Edition Campaign Tracker</span>
+                </div>
+            </div>
+            <nav class="main-nav">
+                <button class="nav-btn active" data-section="dashboard">
+                    <span class="nav-icon">🏰</span> Dashboard
+                </button>
+                <button class="nav-btn" data-section="party">
+                    <span class="nav-icon">⚔️</span> Party
+                </button>
+                <button class="nav-btn" data-section="stories">
+                    <span class="nav-icon">📜</span> Stories
+                </button>
+                <button class="nav-btn" data-section="dm-notes">
+                    <span class="nav-icon">📖</span> DM Notes
+                </button>
+                <button class="nav-btn" data-section="rules">
+                    <span class="nav-icon">⚖️</span> Rules
+                </button>
+                <button class="nav-btn" data-section="gallery">
+                    <span class="nav-icon">🎨</span> Gallery
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="content-section active">
+            <div class="section-header">
+                <h2>Campaign Dashboard</h2>
+                <p class="section-subtitle">Welcome to the City of Splendors</p>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Campaign Overview Card -->
+                <div class="card campaign-overview">
+                    <div class="card-header">
+                        <h3>📍 Campaign Overview</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="campaign-image">
+                            <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&q=80" alt="Waterdeep City" class="cover-image">
+                            <div class="image-overlay">
+                                <span class="location-badge">Waterdeep</span>
+                            </div>
+                        </div>
+                        <div class="campaign-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Current Chapter</span>
+                                <span class="detail-value" id="current-chapter">Chapter 1: A Friend in Need</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Session Number</span>
+                                <span class="detail-value" id="session-number">Session 1</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">In-Game Date</span>
+                                <span class="detail-value" id="ingame-date">1st of Marpenoth, 1492 DR</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Current Location</span>
+                                <span class="detail-value" id="current-location">The Yawning Portal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="card quick-stats">
+                    <div class="card-header">
+                        <h3>📊 Party Stats</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="stat-grid">
+                            <div class="stat-item">
+                                <span class="stat-number">5</span>
+                                <span class="stat-label">Players</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" id="party-level">1</span>
+                                <span class="stat-label">Party Level</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" id="total-gold">0</span>
+                                <span class="stat-label">Gold (Party)</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" id="sessions-played">0</span>
+                                <span class="stat-label">Sessions</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card recent-activity">
+                    <div class="card-header">
+                        <h3>⏰ Recent Activity</h3>
+                    </div>
+                    <div class="card-content">
+                        <ul class="activity-list" id="activity-list">
+                            <li class="activity-item">
+                                <span class="activity-icon">🎭</span>
+                                <span class="activity-text">Campaign created - Waterdeep: Dragon Heist begins!</span>
+                                <span class="activity-time">Just now</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Next Session -->
+                <div class="card next-session">
+                    <div class="card-header">
+                        <h3>📅 Next Session</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="session-info">
+                            <input type="datetime-local" id="next-session-date" class="session-date-input">
+                            <textarea id="session-notes" placeholder="Session prep notes..." class="session-notes"></textarea>
+                            <button class="btn btn-primary" onclick="saveSessionInfo()">Save</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campaign Synopsis -->
+                <div class="card synopsis full-width">
+                    <div class="card-header">
+                        <h3>📚 Campaign Synopsis</h3>
+                        <button class="btn btn-small" onclick="toggleEditSynopsis()">Edit</button>
+                    </div>
+                    <div class="card-content">
+                        <div id="synopsis-display" class="synopsis-text">
+                            <p><strong>Waterdeep: Dragon Heist</strong> is a treasure hunt set against an urban backdrop of one of D&D's most iconic cities. A massive treasure hoard of half a million gold dragons has been hidden somewhere in the city by the legendary Lord Neverember, and now factions vie for control of this legendary fortune.</p>
+                            <p>Our heroes find themselves drawn into this conflict, starting with a simple rescue mission at the Yawning Portal tavern. Little do they know that their actions will set them on a collision course with some of Waterdeep's most dangerous villains.</p>
+                            <p><em>This homebrewed version incorporates the updated D&D 2024 rules, expanded faction interactions, and additional character-driven storylines.</em></p>
+                        </div>
+                        <div id="synopsis-edit" class="synopsis-edit hidden">
+                            <textarea id="synopsis-textarea" class="synopsis-textarea"></textarea>
+                            <div class="edit-actions">
+                                <button class="btn btn-primary" onclick="saveSynopsis()">Save</button>
+                                <button class="btn btn-secondary" onclick="cancelEditSynopsis()">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Party Section -->
+        <section id="party" class="content-section">
+            <div class="section-header">
+                <h2>The Party</h2>
+                <p class="section-subtitle">Heroes of Waterdeep</p>
+            </div>
+
+            <div class="party-grid" id="party-grid">
+                <!-- Player 1 -->
+                <div class="character-card" data-player="1">
+                    <div class="character-portrait">
+                        <img src="https://images.unsplash.com/photo-1589254065878-42c9da997008?w=400&q=80" alt="Character Portrait" class="portrait-img">
+                        <div class="level-badge">Lvl <span class="char-level">1</span></div>
+                    </div>
+                    <div class="character-info">
+                        <h3 class="char-name" contenteditable="true">Tharion Duskwalker</h3>
+                        <p class="char-race-class" contenteditable="true">Half-Elf Rogue (Thief)</p>
+                        <p class="char-player">Player: <span contenteditable="true">Player 1</span></p>
+                        <div class="char-stats">
+                            <div class="hp-bar">
+                                <div class="hp-fill" style="width: 100%"></div>
+                                <span class="hp-text">HP: <span class="current-hp">10</span>/<span class="max-hp">10</span></span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="mini-stat">AC: <span contenteditable="true">14</span></span>
+                                <span class="mini-stat">Init: <span contenteditable="true">+3</span></span>
+                            </div>
+                        </div>
+                        <div class="char-background">
+                            <p class="background-text" contenteditable="true">A street-smart urchin who grew up in Waterdeep's Dock Ward, seeking to uncover the truth about their missing parents.</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-small edit-char-btn" onclick="openCharacterModal(1)">Full Details</button>
+                </div>
+
+                <!-- Player 2 -->
+                <div class="character-card" data-player="2">
+                    <div class="character-portrait">
+                        <img src="https://images.unsplash.com/photo-1551269901-5c5e14c25df7?w=400&q=80" alt="Character Portrait" class="portrait-img">
+                        <div class="level-badge">Lvl <span class="char-level">1</span></div>
+                    </div>
+                    <div class="character-info">
+                        <h3 class="char-name" contenteditable="true">Seraphina Brightforge</h3>
+                        <p class="char-race-class" contenteditable="true">Dwarf Cleric (Life Domain)</p>
+                        <p class="char-player">Player: <span contenteditable="true">Player 2</span></p>
+                        <div class="char-stats">
+                            <div class="hp-bar">
+                                <div class="hp-fill" style="width: 100%"></div>
+                                <span class="hp-text">HP: <span class="current-hp">11</span>/<span class="max-hp">11</span></span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="mini-stat">AC: <span contenteditable="true">18</span></span>
+                                <span class="mini-stat">Init: <span contenteditable="true">+0</span></span>
+                            </div>
+                        </div>
+                        <div class="char-background">
+                            <p class="background-text" contenteditable="true">A devout follower of Moradin, sent to Waterdeep to establish stronger ties with the city's dwarven community.</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-small edit-char-btn" onclick="openCharacterModal(2)">Full Details</button>
+                </div>
+
+                <!-- Player 3 -->
+                <div class="character-card" data-player="3">
+                    <div class="character-portrait">
+                        <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&q=80" alt="Character Portrait" class="portrait-img">
+                        <div class="level-badge">Lvl <span class="char-level">1</span></div>
+                    </div>
+                    <div class="character-info">
+                        <h3 class="char-name" contenteditable="true">Zephyr Moonwhisper</h3>
+                        <p class="char-race-class" contenteditable="true">Elf Wizard (Evocation)</p>
+                        <p class="char-player">Player: <span contenteditable="true">Player 3</span></p>
+                        <div class="char-stats">
+                            <div class="hp-bar">
+                                <div class="hp-fill" style="width: 100%"></div>
+                                <span class="hp-text">HP: <span class="current-hp">8</span>/<span class="max-hp">8</span></span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="mini-stat">AC: <span contenteditable="true">12</span></span>
+                                <span class="mini-stat">Init: <span contenteditable="true">+2</span></span>
+                            </div>
+                        </div>
+                        <div class="char-background">
+                            <p class="background-text" contenteditable="true">A curious scholar from Evermeet, drawn to Waterdeep by rumors of ancient magical artifacts hidden within the city.</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-small edit-char-btn" onclick="openCharacterModal(3)">Full Details</button>
+                </div>
+
+                <!-- Player 4 -->
+                <div class="character-card" data-player="4">
+                    <div class="character-portrait">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80" alt="Character Portrait" class="portrait-img">
+                        <div class="level-badge">Lvl <span class="char-level">1</span></div>
+                    </div>
+                    <div class="character-info">
+                        <h3 class="char-name" contenteditable="true">Grimjaw Ironhide</h3>
+                        <p class="char-race-class" contenteditable="true">Goliath Fighter (Champion)</p>
+                        <p class="char-player">Player: <span contenteditable="true">Player 4</span></p>
+                        <div class="char-stats">
+                            <div class="hp-bar">
+                                <div class="hp-fill" style="width: 100%"></div>
+                                <span class="hp-text">HP: <span class="current-hp">13</span>/<span class="max-hp">13</span></span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="mini-stat">AC: <span contenteditable="true">16</span></span>
+                                <span class="mini-stat">Init: <span contenteditable="true">+1</span></span>
+                            </div>
+                        </div>
+                        <div class="char-background">
+                            <p class="background-text" contenteditable="true">A former gladiator who won their freedom and now works as a bodyguard in Waterdeep's North Ward.</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-small edit-char-btn" onclick="openCharacterModal(4)">Full Details</button>
+                </div>
+
+                <!-- Player 5 -->
+                <div class="character-card" data-player="5">
+                    <div class="character-portrait">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80" alt="Character Portrait" class="portrait-img">
+                        <div class="level-badge">Lvl <span class="char-level">1</span></div>
+                    </div>
+                    <div class="character-info">
+                        <h3 class="char-name" contenteditable="true">Lyra Shadowmend</h3>
+                        <p class="char-race-class" contenteditable="true">Tiefling Warlock (Archfey)</p>
+                        <p class="char-player">Player: <span contenteditable="true">Player 5</span></p>
+                        <div class="char-stats">
+                            <div class="hp-bar">
+                                <div class="hp-fill" style="width: 100%"></div>
+                                <span class="hp-text">HP: <span class="current-hp">10</span>/<span class="max-hp">10</span></span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="mini-stat">AC: <span contenteditable="true">13</span></span>
+                                <span class="mini-stat">Init: <span contenteditable="true">+2</span></span>
+                            </div>
+                        </div>
+                        <div class="char-background">
+                            <p class="background-text" contenteditable="true">A mysterious performer who made a pact with a fey entity, now searching for a way to fulfill - or escape - their bargain.</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-small edit-char-btn" onclick="openCharacterModal(5)">Full Details</button>
+                </div>
+            </div>
+
+            <!-- DM Card -->
+            <div class="dm-section">
+                <div class="dm-card">
+                    <div class="dm-portrait">
+                        <div class="dm-icon">👑</div>
+                    </div>
+                    <div class="dm-info">
+                        <h3>Dungeon Master</h3>
+                        <p class="dm-name" contenteditable="true">The Architect of Fate</p>
+                        <p class="dm-tagline" contenteditable="true">"In Waterdeep, even the cobblestones have secrets..."</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stories Section -->
+        <section id="stories" class="content-section">
+            <div class="section-header">
+                <h2>Stories & Chronicles</h2>
+                <p class="section-subtitle">Tales from the City of Splendors</p>
+                <button class="btn btn-primary" onclick="openStoryModal()">+ New Story</button>
+            </div>
+
+            <div class="stories-container">
+                <div class="story-filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="session">Session Recaps</button>
+                    <button class="filter-btn" data-filter="backstory">Backstories</button>
+                    <button class="filter-btn" data-filter="journal">Character Journals</button>
+                    <button class="filter-btn" data-filter="lore">Lore</button>
+                </div>
+
+                <div class="stories-grid" id="stories-grid">
+                    <!-- Sample Story -->
+                    <article class="story-card" data-type="session">
+                        <div class="story-header">
+                            <span class="story-type-badge session">Session Recap</span>
+                            <span class="story-date">Session 0</span>
+                        </div>
+                        <h3 class="story-title">The Gathering Storm</h3>
+                        <p class="story-author">By: Dungeon Master</p>
+                        <p class="story-preview">Five strangers arrive in Waterdeep during the tail end of summer, each drawn by their own reasons to the City of Splendors. Fate - or perhaps something more deliberate - will soon bring them together...</p>
+                        <div class="story-footer">
+                            <button class="btn btn-small" onclick="openStoryView(0)">Read More</button>
+                            <div class="story-stats">
+                                <span>📖 1,234 words</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+
+            <!-- File Upload Section -->
+            <div class="upload-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📁 Campaign Files</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="upload-zone" id="upload-zone">
+                            <div class="upload-icon">📤</div>
+                            <p>Drag & drop files here or click to upload</p>
+                            <p class="upload-hint">Supports images, PDFs, and documents</p>
+                            <input type="file" id="file-input" multiple accept="image/*,.pdf,.doc,.docx,.txt" hidden>
+                        </div>
+                        <div class="uploaded-files" id="uploaded-files">
+                            <!-- Uploaded files will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DM Notes Section -->
+        <section id="dm-notes" class="content-section">
+            <div class="section-header">
+                <h2>Dungeon Master's Notes</h2>
+                <p class="section-subtitle">Behind the Screen</p>
+            </div>
+
+            <div class="dm-notes-container">
+                <div class="notes-tabs">
+                    <button class="tab-btn active" data-tab="ic-notes">
+                        <span class="tab-icon">🎭</span> In-Character Notes
+                    </button>
+                    <button class="tab-btn" data-tab="ooc-notes">
+                        <span class="tab-icon">📋</span> Out-of-Character Notes
+                    </button>
+                    <button class="tab-btn" data-tab="npcs">
+                        <span class="tab-icon">👥</span> NPCs
+                    </button>
+                    <button class="tab-btn" data-tab="locations">
+                        <span class="tab-icon">🗺️</span> Locations
+                    </button>
+                    <button class="tab-btn" data-tab="quests">
+                        <span class="tab-icon">⚔️</span> Quests
+                    </button>
+                </div>
+
+                <!-- IC Notes Tab -->
+                <div class="tab-content active" id="ic-notes">
+                    <div class="notes-toolbar">
+                        <button class="btn btn-primary" onclick="addICNote()">+ Add IC Note</button>
+                    </div>
+                    <div class="notes-list" id="ic-notes-list">
+                        <div class="note-card ic">
+                            <div class="note-header">
+                                <h4>The Yawning Portal Atmosphere</h4>
+                                <span class="note-date">Session 1</span>
+                            </div>
+                            <div class="note-content">
+                                <p><em>"The common room buzzes with the usual crowd - adventurers nursing ales and wounds alike, merchants conducting quiet business in shadowed corners, and the ever-present rumble of Durnan's gravelly voice keeping order. The great well in the center of the room - the entrance to Undermountain itself - seems to pulse with an almost hungry energy tonight..."</em></p>
+                            </div>
+                            <div class="note-tags">
+                                <span class="tag">atmosphere</span>
+                                <span class="tag">yawning portal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OOC Notes Tab -->
+                <div class="tab-content" id="ooc-notes">
+                    <div class="notes-toolbar">
+                        <button class="btn btn-primary" onclick="addOOCNote()">+ Add OOC Note</button>
+                    </div>
+                    <div class="notes-list" id="ooc-notes-list">
+                        <div class="note-card ooc">
+                            <div class="note-header">
+                                <h4>Session Planning - Chapter 1</h4>
+                                <span class="note-date">Pre-Session</span>
+                            </div>
+                            <div class="note-content">
+                                <p><strong>Key Beats:</strong></p>
+                                <ul>
+                                    <li>Introduce the party at the Yawning Portal</li>
+                                    <li>Troll attack from the well</li>
+                                    <li>Volo's proposition</li>
+                                    <li>Investigation of Floon's disappearance</li>
+                                </ul>
+                                <p><strong>Potential Hooks:</strong></p>
+                                <ul>
+                                    <li>Connect to Tharion's missing parents subplot</li>
+                                    <li>Seraphina might know someone in the Dock Ward</li>
+                                </ul>
+                            </div>
+                            <div class="note-tags">
+                                <span class="tag">planning</span>
+                                <span class="tag">chapter 1</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NPCs Tab -->
+                <div class="tab-content" id="npcs">
+                    <div class="notes-toolbar">
+                        <button class="btn btn-primary" onclick="addNPC()">+ Add NPC</button>
+                    </div>
+                    <div class="npc-grid" id="npc-grid">
+                        <div class="npc-card">
+                            <div class="npc-portrait">
+                                <img src="https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=200&q=80" alt="Durnan">
+                            </div>
+                            <div class="npc-info">
+                                <h4>Durnan</h4>
+                                <p class="npc-role">Owner of the Yawning Portal</p>
+                                <p class="npc-description">A retired adventurer and the stoic proprietor of Waterdeep's most famous tavern. His eyes hold secrets of Undermountain that he rarely shares.</p>
+                                <div class="npc-status">
+                                    <span class="status-badge friendly">Friendly</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="npc-card">
+                            <div class="npc-portrait">
+                                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80" alt="Volo">
+                            </div>
+                            <div class="npc-info">
+                                <h4>Volothamp Geddarm (Volo)</h4>
+                                <p class="npc-role">Famous Author & Raconteur</p>
+                                <p class="npc-description">The flamboyant author of "Volo's Guide to Monsters" and many other works. Currently working on a new book about Waterdeep.</p>
+                                <div class="npc-status">
+                                    <span class="status-badge quest-giver">Quest Giver</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="npc-card">
+                            <div class="npc-portrait">
+                                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80" alt="Floon">
+                            </div>
+                            <div class="npc-info">
+                                <h4>Floon Blagmaar</h4>
+                                <p class="npc-role">Volo's Friend</p>
+                                <p class="npc-description">A handsome but somewhat vapid young man who has gone missing. His disappearance kicks off the adventure.</p>
+                                <div class="npc-status">
+                                    <span class="status-badge missing">Missing</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Locations Tab -->
+                <div class="tab-content" id="locations">
+                    <div class="notes-toolbar">
+                        <button class="btn btn-primary" onclick="addLocation()">+ Add Location</button>
+                    </div>
+                    <div class="locations-list" id="locations-list">
+                        <div class="location-card">
+                            <div class="location-image">
+                                <img src="https://images.unsplash.com/photo-1555992336-03a23c7b20ee?w=400&q=80" alt="The Yawning Portal">
+                            </div>
+                            <div class="location-info">
+                                <h4>The Yawning Portal</h4>
+                                <p class="location-ward">Castle Ward</p>
+                                <p class="location-description">The most famous tavern in all of Waterdeep, built around the entrance to Undermountain. Adventurers come from across the Sword Coast to test their mettle in the depths below.</p>
+                                <div class="location-details">
+                                    <span class="detail">🍺 Tavern</span>
+                                    <span class="detail">⚔️ Dungeon Entrance</span>
+                                    <span class="detail">📍 Known</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="location-card">
+                            <div class="location-image">
+                                <img src="https://images.unsplash.com/photo-1519999482648-25049ddd37b1?w=400&q=80" alt="Dock Ward">
+                            </div>
+                            <div class="location-info">
+                                <h4>The Dock Ward</h4>
+                                <p class="location-ward">Dock Ward</p>
+                                <p class="location-description">The roughest and most dangerous ward of Waterdeep. Home to sailors, warehouses, and those who prefer to conduct business away from prying eyes.</p>
+                                <div class="location-details">
+                                    <span class="detail">🚢 Harbor</span>
+                                    <span class="detail">⚠️ Dangerous</span>
+                                    <span class="detail">📍 Known</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quests Tab -->
+                <div class="tab-content" id="quests">
+                    <div class="notes-toolbar">
+                        <button class="btn btn-primary" onclick="addQuest()">+ Add Quest</button>
+                    </div>
+                    <div class="quests-list" id="quests-list">
+                        <div class="quest-card main">
+                            <div class="quest-status-indicator active"></div>
+                            <div class="quest-info">
+                                <div class="quest-header">
+                                    <h4>Find Floon Blagmaar</h4>
+                                    <span class="quest-type main-quest">Main Quest</span>
+                                </div>
+                                <p class="quest-giver">Quest Giver: Volothamp Geddarm</p>
+                                <p class="quest-description">Volo's friend Floon has gone missing after a night out in the Dock Ward. Find him and return him safely.</p>
+                                <div class="quest-rewards">
+                                    <span class="reward">💰 100 gp (promised)</span>
+                                    <span class="reward">🏠 A "property" in Waterdeep</span>
+                                </div>
+                                <div class="quest-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 0%"></div>
+                                    </div>
+                                    <span class="progress-text">Not Started</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Rules Section -->
+        <section id="rules" class="content-section">
+            <div class="section-header">
+                <h2>House Rules & References</h2>
+                <p class="section-subtitle">D&D 2024 Edition Rules & Campaign-Specific Modifications</p>
+            </div>
+
+            <div class="rules-container">
+                <div class="rules-sidebar">
+                    <nav class="rules-nav">
+                        <button class="rules-nav-btn active" data-rule="house-rules">🏠 House Rules</button>
+                        <button class="rules-nav-btn" data-rule="combat">⚔️ Combat</button>
+                        <button class="rules-nav-btn" data-rule="magic">✨ Magic</button>
+                        <button class="rules-nav-btn" data-rule="exploration">🗺️ Exploration</button>
+                        <button class="rules-nav-btn" data-rule="social">💬 Social</button>
+                        <button class="rules-nav-btn" data-rule="resting">🛏️ Resting</button>
+                        <button class="rules-nav-btn" data-rule="death">💀 Death & Dying</button>
+                        <button class="rules-nav-btn" data-rule="homebrew">🔧 Homebrew</button>
+                    </nav>
+                </div>
+
+                <div class="rules-content">
+                    <!-- House Rules -->
+                    <div class="rule-section active" id="rule-house-rules">
+                        <div class="rule-header">
+                            <h3>🏠 House Rules</h3>
+                            <button class="btn btn-small" onclick="toggleEditRules('house-rules')">Edit</button>
+                        </div>
+                        <div class="rule-content" id="house-rules-content">
+                            <div class="rule-display">
+                                <h4>General House Rules</h4>
+                                <ul>
+                                    <li><strong>Rule of Cool:</strong> If something is dramatically appropriate and awesome, the DM may allow it with appropriate checks.</li>
+                                    <li><strong>Critical Hits:</strong> On a natural 20, roll damage dice twice (2024 rules) AND add maximum damage from one set.</li>
+                                    <li><strong>Inspiration:</strong> Players can hold up to 2 Inspiration points. Inspiration can be given to other players.</li>
+                                    <li><strong>Flanking:</strong> Grants +2 to attack rolls instead of advantage (to preserve the value of class features).</li>
+                                    <li><strong>Potions:</strong> Drinking a potion is a bonus action. Administering to another is an action.</li>
+                                </ul>
+
+                                <h4>Table Etiquette</h4>
+                                <ul>
+                                    <li>Phones on silent during sessions</li>
+                                    <li>No PvP without mutual consent</li>
+                                    <li>The DM's ruling is final (but can be discussed after session)</li>
+                                    <li>X-Card system is in effect - anyone can call X to skip content</li>
+                                </ul>
+
+                                <h4>Attendance</h4>
+                                <ul>
+                                    <li>Please notify at least 24 hours in advance if you can't make it</li>
+                                    <li>Sessions proceed with 3+ players</li>
+                                    <li>Absent characters are "in the background" unless story demands otherwise</li>
+                                </ul>
+                            </div>
+                            <div class="rule-edit hidden">
+                                <textarea class="rule-textarea" id="house-rules-edit"></textarea>
+                                <div class="edit-actions">
+                                    <button class="btn btn-primary" onclick="saveRules('house-rules')">Save</button>
+                                    <button class="btn btn-secondary" onclick="cancelEditRules('house-rules')">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Combat Rules -->
+                    <div class="rule-section" id="rule-combat">
+                        <div class="rule-header">
+                            <h3>⚔️ Combat Rules (2024 Edition)</h3>
+                            <button class="btn btn-small" onclick="toggleEditRules('combat')">Edit</button>
+                        </div>
+                        <div class="rule-content" id="combat-content">
+                            <div class="rule-display">
+                                <h4>Initiative</h4>
+                                <ul>
+                                    <li>Roll d20 + Dexterity modifier + any bonuses</li>
+                                    <li>Ties go to higher Dexterity score, then players before monsters</li>
+                                </ul>
+
+                                <h4>Actions in Combat</h4>
+                                <ul>
+                                    <li><strong>Action:</strong> Attack, Cast a Spell, Dash, Disengage, Dodge, Help, Hide, Ready, Search, Use an Object</li>
+                                    <li><strong>Bonus Action:</strong> Only if a feature specifically grants one</li>
+                                    <li><strong>Reaction:</strong> Opportunity Attack, Readied Action, or specific features</li>
+                                    <li><strong>Free Object Interaction:</strong> One per turn (draw weapon, open door, etc.)</li>
+                                </ul>
+
+                                <h4>2024 Changes</h4>
+                                <ul>
+                                    <li><strong>Weapon Mastery:</strong> Each weapon has a mastery property that martial characters can use</li>
+                                    <li><strong>Two-Weapon Fighting:</strong> Now part of the Attack action, not a bonus action</li>
+                                    <li><strong>Grapple/Shove:</strong> Can replace one attack, uses Athletics vs. target's save</li>
+                                </ul>
+
+                                <h4>Conditions Quick Reference</h4>
+                                <ul>
+                                    <li><strong>Blinded:</strong> Auto-fail sight checks, disadvantage on attacks, attacks against have advantage</li>
+                                    <li><strong>Frightened:</strong> Disadvantage while source visible, can't move closer</li>
+                                    <li><strong>Prone:</strong> Disadvantage on attacks, melee attacks have advantage, ranged have disadvantage</li>
+                                    <li><strong>Stunned:</strong> Incapacitated, auto-fail Str/Dex saves, attacks have advantage</li>
+                                </ul>
+                            </div>
+                            <div class="rule-edit hidden">
+                                <textarea class="rule-textarea" id="combat-edit"></textarea>
+                                <div class="edit-actions">
+                                    <button class="btn btn-primary" onclick="saveRules('combat')">Save</button>
+                                    <button class="btn btn-secondary" onclick="cancelEditRules('combat')">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Magic Rules -->
+                    <div class="rule-section" id="rule-magic">
+                        <div class="rule-header">
+                            <h3>✨ Magic Rules</h3>
+                            <button class="btn btn-small" onclick="toggleEditRules('magic')">Edit</button>
+                        </div>
+                        <div class="rule-content" id="magic-content">
+                            <div class="rule-display">
+                                <h4>Spellcasting Basics</h4>
+                                <ul>
+                                    <li><strong>Spell Slots:</strong> Expended on casting, recovered on rest</li>
+                                    <li><strong>Concentration:</strong> Only one concentration spell at a time. Con save DC 10 or half damage taken.</li>
+                                    <li><strong>Components:</strong> V (verbal), S (somatic), M (material)</li>
+                                </ul>
+
+                                <h4>2024 Changes</h4>
+                                <ul>
+                                    <li><strong>Spell Lists:</strong> Now organized by Arcane, Divine, and Primal</li>
+                                    <li><strong>Cantrip Scaling:</strong> Based on character level, not class level</li>
+                                    <li><strong>Ritual Casting:</strong> Added 10 minutes, doesn't expend spell slot</li>
+                                </ul>
+
+                                <h4>House Rule Modifications</h4>
+                                <ul>
+                                    <li><strong>Identify:</strong> Short rest can identify most items; Identify reveals curses</li>
+                                    <li><strong>Spell Components:</strong> Component pouch/focus covers all non-consumed, non-costly materials</li>
+                                </ul>
+                            </div>
+                            <div class="rule-edit hidden">
+                                <textarea class="rule-textarea" id="magic-edit"></textarea>
+                                <div class="edit-actions">
+                                    <button class="btn btn-primary" onclick="saveRules('magic')">Save</button>
+                                    <button class="btn btn-secondary" onclick="cancelEditRules('magic')">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Exploration Rules -->
+                    <div class="rule-section" id="rule-exploration">
+                        <div class="rule-header">
+                            <h3>🗺️ Exploration Rules</h3>
+                            <button class="btn btn-small" onclick="toggleEditRules('exploration')">Edit</button>
+                        </div>
+                        <div class="rule-content" id="exploration-content">
+                            <div class="rule-display">
+                                <h4>Travel Pace</h4>
+                                <ul>
+                                    <li><strong>Fast:</strong> 400 feet/minute, 4 mph, 30 miles/day (-5 passive Perception)</li>
+                                    <li><strong>Normal:</strong> 300 feet/minute, 3 mph, 24 miles/day</li>
+                                    <li><strong>Slow:</strong> 200 feet/minute, 2 mph, 18 miles/day (can stealth)</li>
+                                </ul>
+
+                                <h4>Waterdeep Navigation</h4>
+                                <ul>
+                                    <li>Getting around Waterdeep doesn't require checks for known locations</li>
+                                    <li>Finding specific addresses/hidden locations may require Investigation or asking around</li>
+                                    <li>The Watch patrols most wards; Dock Ward has less presence</li>
+                                </ul>
+
+                                <h4>Skill Challenges</h4>
+                                <ul>
+                                    <li>Complex tasks may use skill challenges: accumulate successes before failures</li>
+                                    <li>Different skills can contribute - creativity encouraged!</li>
+                                </ul>
+                            </div>
+                            <div class="rule-edit hidden">
+                                <textarea class="rule-textarea" id="exploration-edit"></textarea>
+                                <div class="edit-actions">
+                                    <button class="btn btn-primary" onclick="saveRules('exploration')">Save</button>
+                                    <button class="btn btn-secondary" onclick="cancelEditRules('exploration')">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Social Rules -->
+                    <div class="rule-section" id="rule-social">
+                        <div class="rule-header">
+                            <h3>💬 Social Interaction</h3>
+                            <button class="btn btn-small" onclick="toggleEditRules('social')">Edit</button>
+                        </div>
+                        <div class="rule-content" id="social-content">
+                            <div class="rule-display">
+                                <h4>NPC Attitudes</h4>
+                                <ul>
+                                    <li><strong>Hostile:</strong> Works against you, may attack</li>
+                                    <li><strong>Unfriendly:</strong> Won't help, may hinder</li>
+                                    <li><strong>Indifferent:</strong> Neutral, will help for fair payment</li>
+                                    <li><strong>Friendly:</strong> Will help within reason</li>
+                                    <li><strong>Helpful:</strong> Will take risks to help</li>
+                                </ul>
+
+                                <h4>Social Skills</h4>
+                                <ul>
+                                    <li><strong>Persuasion:</strong> Good faith attempts to convince</li>
+                                    <li><strong>Deception:</strong> Lies and misdirection</li>
+                                    <li><strong>Intimidation:</strong> Threats and coercion</li>
+                                    <li><strong>Insight:</strong> Reading motives and lies</li>
+                                </ul>
+
+                                <h4>Waterdeep Social Notes</h4>
+                                <ul>
+                                    <li>Noble houses have complex relationships - tread carefully</li>
+                                    <li>The Code Legal governs behavior - violence has consequences</li>
+                                    <li>Factions offer opportunities and obligations</li>
+                                </ul>
+                            </div>
+                            <div class="rule-edit hidden">
+                                <textarea class="rule-textarea" id="social-edit"></textarea>
+                                <div class="edit-actions">
+                                    <button class="btn btn-primary" onclick="saveRules('social')">Save</button>
+                                    <button class="btn btn-secondary" onclick="cancelEditRules('social')">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resting Rules -->
+                    <div class="rule-section" id="rule-resting">
+                        <div class="rule-header">
+                            <h3>🛏️ Resting Rules</h3>
+                            <button class="btn btn-small" onclick="toggleEditRules('resting')">Edit</button>
+                        </div>
+                        <div class="rule-content" id="resting-content">
+                            <div class="rule-display">
+                                <h4>Short Rest</h4>
+                                <ul>
+                                    <li>1 hour of downtime</li>
+                                    <li>Spend Hit Dice to heal</li>
+                                    <li>Some features recharge</li>
+                                </ul>
+
+                                <h4>Long Rest</h4>
+                                <ul>
+                                    <li>8 hours (6 sleeping, 2 light activity)</li>
+                                    <li>Regain all HP and half Hit Dice (minimum 1)</li>
+                                    <li>Regain all spell slots and most features</li>
+                                    <li>Only one per 24 hours</li>
+                                </ul>
+
+                                <h4>Waterdeep Lodging</h4>
+                                <ul>
+                                    <li><strong>Squalid:</strong> 1 sp/night - Dock Ward flophouses</li>
+                                    <li><strong>Poor:</strong> 2 sp/night - Basic inns</li>
+                                    <li><strong>Modest:</strong> 5 sp/night - Decent rooms</li>
+                                    <li><strong>Comfortable:</strong> 8 sp/night - Good inns like the Yawning Portal</li>
+                                    <li><strong>Wealthy:</strong> 2 gp/night - Fine establishments</li>
+                                    <li><strong>Aristocratic:</strong> 4+ gp/night - Luxury accommodations</li>
+                                </ul>
+                            </div>
+                            <div class="rule-edit hidden">
+                                <textarea class="rule-textarea" id="resting-edit"></textarea>
+                                <div class="edit-actions">
+                                    <button class="btn btn-primary" onclick="saveRules('resting')">Save</button>
+                                    <button class="btn btn-secondary" onclick="cancelEditRules('resting')">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Death Rules -->
+                    <div class="rule-section" id="rule-death">
+                        <div class="rule-header">
+                            <h3>💀 Death & Dying</h3>
+                            <button class="btn btn-small" onclick="toggleEditRules('death')">Edit</button>
+                        </div>
+                        <div class="rule-content" id="death-content">
+                            <div class="rule-display">
+                                <h4>Dropping to 0 HP</h4>
+                                <ul>
+                                    <li>Fall unconscious and begin making death saves</li>
+                                    <li>Stable at 3 successes, dead at 3 failures</li>
+                                    <li>Natural 20: regain 1 HP</li>
+                                    <li>Natural 1: counts as 2 failures</li>
+                                    <li>Taking damage while at 0: automatic failure (crit = 2 failures)</li>
+                                </ul>
+
+                                <h4>Instant Death</h4>
+                                <ul>
+                                    <li>Damage exceeding current HP + max HP = instant death</li>
+                                    <li>Certain effects (Power Word Kill, Disintegrate at 0 HP)</li>
+                                </ul>
+
+                                <h4>Resurrection</h4>
+                                <ul>
+                                    <li>Revivify (3rd): 1 minute, 300gp diamonds</li>
+                                    <li>Raise Dead (5th): 10 days, 500gp diamonds</li>
+                                    <li>Resurrection (7th): 100 years, 1000gp diamonds</li>
+                                    <li>True Resurrection (9th): 200 years, 25000gp diamonds</li>
+                                </ul>
+
+                                <h4>House Rules</h4>
+                                <ul>
+                                    <li>Death saves are rolled privately by the DM to increase tension</li>
+                                    <li>Resurrection may have story consequences in Waterdeep</li>
+                                </ul>
+                            </div>
+                            <div class="rule-edit hidden">
+                                <textarea class="rule-textarea" id="death-edit"></textarea>
+                                <div class="edit-actions">
+                                    <button class="btn btn-primary" onclick="saveRules('death')">Save</button>
+                                    <button class="btn btn-secondary" onclick="cancelEditRules('death')">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Homebrew Rules -->
+                    <div class="rule-section" id="rule-homebrew">
+                        <div class="rule-header">
+                            <h3>🔧 Homebrew & Campaign-Specific</h3>
+                            <button class="btn btn-small" onclick="toggleEditRules('homebrew')">Edit</button>
+                        </div>
+                        <div class="rule-content" id="homebrew-content">
+                            <div class="rule-display">
+                                <h4>Waterdeep-Specific Rules</h4>
+                                <ul>
+                                    <li><strong>The Code Legal:</strong> Waterdeep has strict laws. Murder, theft, and assault are punished severely.</li>
+                                    <li><strong>Masked Lords:</strong> The city's rulers are anonymous - never assume you know who they are.</li>
+                                    <li><strong>Walking Statues:</strong> In emergencies, massive constructs may activate to defend the city.</li>
+                                </ul>
+
+                                <h4>Faction Benefits</h4>
+                                <p>Joining factions provides benefits based on renown:</p>
+                                <ul>
+                                    <li><strong>Harpers:</strong> Information network, safe houses</li>
+                                    <li><strong>Order of the Gauntlet:</strong> Martial support, healing</li>
+                                    <li><strong>Emerald Enclave:</strong> Nature magic, animal companions</li>
+                                    <li><strong>Lords' Alliance:</strong> Political connections, resources</li>
+                                    <li><strong>Zhentarim:</strong> Black market access, muscle for hire</li>
+                                </ul>
+
+                                <h4>Downtime Activities</h4>
+                                <ul>
+                                    <li><strong>Work:</strong> Earn modest living expenses</li>
+                                    <li><strong>Train:</strong> Learn new tool/language (250 days, 1gp/day)</li>
+                                    <li><strong>Research:</strong> Learn about topics relevant to the campaign</li>
+                                    <li><strong>Carousing:</strong> Make contacts (and potentially trouble)</li>
+                                </ul>
+
+                                <h4>Party Decisions Log</h4>
+                                <p><em>Record significant rule discussions and decisions here:</em></p>
+                                <ul>
+                                    <li>No entries yet - add decisions as the campaign progresses!</li>
+                                </ul>
+                            </div>
+                            <div class="rule-edit hidden">
+                                <textarea class="rule-textarea" id="homebrew-edit"></textarea>
+                                <div class="edit-actions">
+                                    <button class="btn btn-primary" onclick="saveRules('homebrew')">Save</button>
+                                    <button class="btn btn-secondary" onclick="cancelEditRules('homebrew')">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gallery Section -->
+        <section id="gallery" class="content-section">
+            <div class="section-header">
+                <h2>Campaign Gallery</h2>
+                <p class="section-subtitle">Visual Chronicles of Waterdeep</p>
+                <button class="btn btn-primary" onclick="openImageUpload()">+ Add Image</button>
+            </div>
+
+            <div class="gallery-filters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="maps">Maps</button>
+                <button class="filter-btn" data-filter="characters">Characters</button>
+                <button class="filter-btn" data-filter="locations">Locations</button>
+                <button class="filter-btn" data-filter="items">Items</button>
+                <button class="filter-btn" data-filter="scenes">Scenes</button>
+            </div>
+
+            <div class="gallery-grid" id="gallery-grid">
+                <!-- Waterdeep Map -->
+                <div class="gallery-item" data-category="maps">
+                    <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&q=80" alt="Waterdeep City Map">
+                    <div class="gallery-overlay">
+                        <h4>City of Waterdeep</h4>
+                        <p>The City of Splendors</p>
+                    </div>
+                </div>
+
+                <!-- Yawning Portal -->
+                <div class="gallery-item" data-category="locations">
+                    <img src="https://images.unsplash.com/photo-1555992336-03a23c7b20ee?w=600&q=80" alt="The Yawning Portal">
+                    <div class="gallery-overlay">
+                        <h4>The Yawning Portal</h4>
+                        <p>Famous Tavern & Dungeon Entrance</p>
+                    </div>
+                </div>
+
+                <!-- Fantasy Street -->
+                <div class="gallery-item" data-category="locations">
+                    <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&q=80" alt="Waterdeep Streets">
+                    <div class="gallery-overlay">
+                        <h4>Streets of Waterdeep</h4>
+                        <p>The bustling city streets</p>
+                    </div>
+                </div>
+
+                <!-- Harbor -->
+                <div class="gallery-item" data-category="locations">
+                    <img src="https://images.unsplash.com/photo-1519999482648-25049ddd37b1?w=600&q=80" alt="Waterdeep Harbor">
+                    <div class="gallery-overlay">
+                        <h4>Waterdeep Harbor</h4>
+                        <p>The Dock Ward</p>
+                    </div>
+                </div>
+
+                <!-- Noble District -->
+                <div class="gallery-item" data-category="locations">
+                    <img src="https://images.unsplash.com/photo-1464146072230-91cabc968266?w=600&q=80" alt="Noble District">
+                    <div class="gallery-overlay">
+                        <h4>Sea Ward</h4>
+                        <p>Home of Waterdeep's Nobility</p>
+                    </div>
+                </div>
+
+                <!-- Underground -->
+                <div class="gallery-item" data-category="locations">
+                    <img src="https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=600&q=80" alt="Underground">
+                    <div class="gallery-overlay">
+                        <h4>The Sewers</h4>
+                        <p>Beneath the streets</p>
+                    </div>
+                </div>
+
+                <!-- Treasure -->
+                <div class="gallery-item" data-category="items">
+                    <img src="https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=600&q=80" alt="Dragon Hoard">
+                    <div class="gallery-overlay">
+                        <h4>The Dragon Hoard</h4>
+                        <p>500,000 Gold Dragons</p>
+                    </div>
+                </div>
+
+                <!-- Magic Items -->
+                <div class="gallery-item" data-category="items">
+                    <img src="https://images.unsplash.com/photo-1551269901-5c5e14c25df7?w=600&q=80" alt="Magic Items">
+                    <div class="gallery-overlay">
+                        <h4>Magical Artifacts</h4>
+                        <p>Items of Power</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Story Modal -->
+    <div id="story-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="story-modal-title">New Story</h3>
+                <button class="modal-close" onclick="closeModal('story-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="story-form">
+                    <div class="form-group">
+                        <label for="story-title-input">Title</label>
+                        <input type="text" id="story-title-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="story-type-select">Type</label>
+                        <select id="story-type-select">
+                            <option value="session">Session Recap</option>
+                            <option value="backstory">Backstory</option>
+                            <option value="journal">Character Journal</option>
+                            <option value="lore">Lore</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="story-author-input">Author</label>
+                        <input type="text" id="story-author-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="story-content-input">Content</label>
+                        <textarea id="story-content-input" rows="15" required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Story</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('story-modal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div id="note-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="note-modal-title">New Note</h3>
+                <button class="modal-close" onclick="closeModal('note-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="note-form">
+                    <input type="hidden" id="note-type-hidden">
+                    <div class="form-group">
+                        <label for="note-title-input">Title</label>
+                        <input type="text" id="note-title-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="note-session-input">Session/Date</label>
+                        <input type="text" id="note-session-input" placeholder="e.g., Session 1, Pre-Session">
+                    </div>
+                    <div class="form-group">
+                        <label for="note-content-input">Content</label>
+                        <textarea id="note-content-input" rows="10" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="note-tags-input">Tags (comma separated)</label>
+                        <input type="text" id="note-tags-input" placeholder="e.g., planning, chapter 1">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Note</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('note-modal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- NPC Modal -->
+    <div id="npc-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add NPC</h3>
+                <button class="modal-close" onclick="closeModal('npc-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="npc-form">
+                    <div class="form-group">
+                        <label for="npc-name-input">Name</label>
+                        <input type="text" id="npc-name-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="npc-role-input">Role/Title</label>
+                        <input type="text" id="npc-role-input" placeholder="e.g., Tavern Owner, City Guard">
+                    </div>
+                    <div class="form-group">
+                        <label for="npc-image-input">Image URL</label>
+                        <input type="url" id="npc-image-input" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label for="npc-description-input">Description</label>
+                        <textarea id="npc-description-input" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="npc-status-select">Status</label>
+                        <select id="npc-status-select">
+                            <option value="friendly">Friendly</option>
+                            <option value="neutral">Neutral</option>
+                            <option value="hostile">Hostile</option>
+                            <option value="unknown">Unknown</option>
+                            <option value="quest-giver">Quest Giver</option>
+                            <option value="missing">Missing</option>
+                            <option value="deceased">Deceased</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Add NPC</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('npc-modal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Modal -->
+    <div id="location-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Location</h3>
+                <button class="modal-close" onclick="closeModal('location-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="location-form">
+                    <div class="form-group">
+                        <label for="location-name-input">Name</label>
+                        <input type="text" id="location-name-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="location-ward-input">Ward/Area</label>
+                        <input type="text" id="location-ward-input" placeholder="e.g., Castle Ward, Dock Ward">
+                    </div>
+                    <div class="form-group">
+                        <label for="location-image-input">Image URL</label>
+                        <input type="url" id="location-image-input" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label for="location-description-input">Description</label>
+                        <textarea id="location-description-input" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="location-tags-input">Tags (comma separated)</label>
+                        <input type="text" id="location-tags-input" placeholder="e.g., Tavern, Shop, Dangerous">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Add Location</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('location-modal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quest Modal -->
+    <div id="quest-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Quest</h3>
+                <button class="modal-close" onclick="closeModal('quest-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="quest-form">
+                    <div class="form-group">
+                        <label for="quest-name-input">Quest Name</label>
+                        <input type="text" id="quest-name-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="quest-type-select">Quest Type</label>
+                        <select id="quest-type-select">
+                            <option value="main">Main Quest</option>
+                            <option value="side">Side Quest</option>
+                            <option value="personal">Personal Quest</option>
+                            <option value="faction">Faction Quest</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="quest-giver-input">Quest Giver</label>
+                        <input type="text" id="quest-giver-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="quest-description-input">Description</label>
+                        <textarea id="quest-description-input" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="quest-rewards-input">Rewards</label>
+                        <input type="text" id="quest-rewards-input" placeholder="e.g., 100 gp, Magic Sword">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Add Quest</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('quest-modal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Story View Modal -->
+    <div id="story-view-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="story-view-title">Story Title</h3>
+                <button class="modal-close" onclick="closeModal('story-view-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="story-view-meta">
+                    <span id="story-view-type" class="story-type-badge"></span>
+                    <span id="story-view-author"></span>
+                    <span id="story-view-date"></span>
+                </div>
+                <div id="story-view-content" class="story-view-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Upload Modal -->
+    <div id="image-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Image to Gallery</h3>
+                <button class="modal-close" onclick="closeModal('image-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="image-form">
+                    <div class="form-group">
+                        <label for="image-url-input">Image URL</label>
+                        <input type="url" id="image-url-input" required placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label for="image-title-input">Title</label>
+                        <input type="text" id="image-title-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="image-description-input">Description</label>
+                        <input type="text" id="image-description-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="image-category-select">Category</label>
+                        <select id="image-category-select">
+                            <option value="maps">Maps</option>
+                            <option value="characters">Characters</option>
+                            <option value="locations">Locations</option>
+                            <option value="items">Items</option>
+                            <option value="scenes">Scenes</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Add to Gallery</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('image-modal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox">
+        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+        <img id="lightbox-img" src="" alt="">
+        <div class="lightbox-caption">
+            <h4 id="lightbox-title"></h4>
+            <p id="lightbox-description"></p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
