@@ -93,6 +93,26 @@ const CampaignData = {
         gallery: [],
         files: [],
         rules: {},
+        // PC Tales data
+        tales: [],
+        evidence: [],
+        resources: {
+            gold: 0,
+            goldNotes: 'Track party treasury here',
+            inventory: '<p><em>No shared items yet</em></p>',
+            property: '<p><em>No properties acquired</em></p>',
+            contacts: '<p><em>No notable contacts yet</em></p>'
+        },
+        // Campaign Notes data
+        dmNotes: [],
+        sessionSummaries: [],
+        // Initiative Tracker
+        encounter: {
+            combatants: [],
+            round: 1,
+            currentTurn: 0,
+            activePCs: []
+        },
         activity: [
             {
                 id: 0,
@@ -480,7 +500,10 @@ function initNoteForm() {
         };
 
         const data = CampaignData.get();
-        if (noteType === 'ic') {
+        if (noteType === 'dm') {
+            if (!data.dmNotes) data.dmNotes = [];
+            data.dmNotes.push(newNote);
+        } else if (noteType === 'ic') {
             data.icNotes.push(newNote);
         } else {
             data.oocNotes.push(newNote);
@@ -491,7 +514,9 @@ function initNoteForm() {
         contentEditor.innerHTML = '';
 
         renderNotes();
-        CampaignData.addActivity(noteType === 'ic' ? '🎭' : '📋', `New ${noteType.toUpperCase()} note: "${newNote.title}"`);
+        renderDMNotes();
+        const icons = { dm: '🎲', ic: '🎭', ooc: '📋' };
+        CampaignData.addActivity(icons[noteType] || '📋', `New ${noteType.toUpperCase()} note: "${newNote.title}"`);
         closeModal('note-modal');
     });
 }
@@ -1298,6 +1323,652 @@ function saveCharacterData() {
 }
 
 // ===================================
+// PC Tales Functions
+// ===================================
+
+function openTaleModal(type = 'journal') {
+    document.getElementById('tale-form').reset();
+    document.getElementById('tale-edit-id').value = '';
+    document.getElementById('tale-type-select').value = type;
+    document.getElementById('tale-content-input').innerHTML = '';
+    document.getElementById('tale-modal-title').textContent = 'New Entry';
+    openModal('tale-modal');
+}
+
+function initTaleForm() {
+    const form = document.getElementById('tale-form');
+    if (!form) return;
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const contentEditor = document.getElementById('tale-content-input');
+        const editId = document.getElementById('tale-edit-id').value;
+
+        const taleData = {
+            id: editId ? parseInt(editId) : Date.now(),
+            title: document.getElementById('tale-title-input').value,
+            type: document.getElementById('tale-type-select').value,
+            author: document.getElementById('tale-author-input').value,
+            session: document.getElementById('tale-session-input').value,
+            content: contentEditor.innerHTML,
+            createdAt: editId ? undefined : new Date().toISOString()
+        };
+
+        const data = CampaignData.get();
+
+        if (editId) {
+            const index = data.tales.findIndex(t => t.id === parseInt(editId));
+            if (index !== -1) {
+                taleData.createdAt = data.tales[index].createdAt;
+                data.tales[index] = taleData;
+            }
+        } else {
+            data.tales.push(taleData);
+        }
+
+        CampaignData.save(data);
+        renderTales();
+        CampaignData.addActivity('📔', `Added new entry: "${taleData.title}"`);
+        closeModal('tale-modal');
+    });
+}
+
+function renderTales() {
+    const data = CampaignData.get();
+
+    // Journals
+    const journalsGrid = document.getElementById('journals-grid');
+    if (journalsGrid) {
+        const journals = data.tales.filter(t => t.type === 'journal');
+        if (journals.length === 0) {
+            journalsGrid.innerHTML = '<div class="initiative-empty"><p>No journal entries yet. Add your first IC log!</p></div>';
+        } else {
+            journalsGrid.innerHTML = journals.map(tale => renderTaleCard(tale)).join('');
+        }
+    }
+
+    // Evidence
+    const evidenceList = document.getElementById('evidence-list');
+    if (evidenceList) {
+        const evidence = data.tales.filter(t => t.type === 'evidence');
+        if (evidence.length === 0) {
+            evidenceList.innerHTML = '<div class="initiative-empty"><p>No evidence or documents collected yet.</p></div>';
+        } else {
+            evidenceList.innerHTML = evidence.map(e => `
+                <div class="evidence-card">
+                    <div class="evidence-icon">📜</div>
+                    <div class="evidence-info">
+                        <h4 class="evidence-title">${e.title}</h4>
+                        <p class="evidence-source">${e.author || 'Unknown source'} • ${e.session || ''}</p>
+                        <div class="tale-preview">${stripHtml(e.content).substring(0, 150)}...</div>
+                    </div>
+                    <button class="btn btn-small" onclick="viewTale(${e.id})">View</button>
+                </div>
+            `).join('');
+        }
+    }
+
+    // Misc
+    const miscList = document.getElementById('misc-list');
+    if (miscList) {
+        const misc = data.tales.filter(t => t.type === 'misc');
+        if (misc.length === 0) {
+            miscList.innerHTML = '<div class="initiative-empty"><p>No other entries yet.</p></div>';
+        } else {
+            miscList.innerHTML = misc.map(tale => renderTaleCard(tale)).join('');
+        }
+    }
+}
+
+function renderTaleCard(tale) {
+    return `
+        <div class="tale-card">
+            <div class="tale-header">
+                <span class="tale-type-badge ${tale.type}">${tale.type}</span>
+                <span class="tale-session">${tale.session || ''}</span>
+            </div>
+            <div class="tale-content">
+                <h4 class="tale-title">${tale.title}</h4>
+                <p class="tale-meta">${tale.author || 'Unknown'}</p>
+                <div class="tale-preview">${stripHtml(tale.content).substring(0, 150)}...</div>
+            </div>
+            <div class="tale-footer">
+                <button class="btn btn-small" onclick="viewTale(${tale.id})">Read</button>
+            </div>
+        </div>
+    `;
+}
+
+function viewTale(taleId) {
+    const data = CampaignData.get();
+    const tale = data.tales.find(t => t.id === taleId);
+    if (!tale) return;
+
+    document.getElementById('story-view-title').textContent = tale.title;
+    document.getElementById('story-view-type').textContent = tale.type;
+    document.getElementById('story-view-type').className = `tale-type-badge ${tale.type}`;
+    document.getElementById('story-view-author').textContent = tale.author || 'Unknown';
+    document.getElementById('story-view-date').textContent = tale.session || '';
+    document.getElementById('story-view-content').innerHTML = tale.content;
+    openModal('story-view-modal');
+}
+
+// ===================================
+// Resource Functions
+// ===================================
+
+function editResource(resourceType) {
+    const data = CampaignData.get();
+    document.getElementById('resource-type-input').value = resourceType;
+
+    const valueGroup = document.getElementById('resource-value-group');
+    const contentEditor = document.getElementById('resource-content-input');
+
+    if (resourceType === 'gold') {
+        valueGroup.style.display = 'block';
+        document.getElementById('resource-value-input').value = data.resources?.gold || 0;
+        contentEditor.innerHTML = data.resources?.goldNotes || '';
+        document.getElementById('resource-modal-title').textContent = 'Edit Party Gold';
+    } else {
+        valueGroup.style.display = 'none';
+        contentEditor.innerHTML = data.resources?.[resourceType] || '';
+        const titles = {
+            inventory: 'Edit Party Inventory',
+            property: 'Edit Party Property',
+            contacts: 'Edit Contacts & Allies'
+        };
+        document.getElementById('resource-modal-title').textContent = titles[resourceType] || 'Edit Resource';
+    }
+
+    openModal('resource-modal');
+}
+
+function initResourceForm() {
+    const form = document.getElementById('resource-form');
+    if (!form) return;
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const resourceType = document.getElementById('resource-type-input').value;
+        const contentEditor = document.getElementById('resource-content-input');
+        const data = CampaignData.get();
+
+        if (!data.resources) data.resources = {};
+
+        if (resourceType === 'gold') {
+            data.resources.gold = parseInt(document.getElementById('resource-value-input').value) || 0;
+            data.resources.goldNotes = contentEditor.innerHTML;
+        } else {
+            data.resources[resourceType] = contentEditor.innerHTML;
+        }
+
+        CampaignData.save(data);
+        renderResources();
+        CampaignData.addActivity('💰', `Updated party ${resourceType}`);
+        closeModal('resource-modal');
+    });
+}
+
+function renderResources() {
+    const data = CampaignData.get();
+    const resources = data.resources || {};
+
+    const goldResource = document.getElementById('party-gold-resource');
+    if (goldResource) goldResource.textContent = `${resources.gold || 0} gp`;
+
+    const goldNotes = document.getElementById('gold-notes');
+    if (goldNotes) goldNotes.innerHTML = resources.goldNotes || 'Track party treasury here';
+
+    const inventory = document.getElementById('party-inventory');
+    if (inventory) inventory.innerHTML = resources.inventory || '<p><em>No shared items yet</em></p>';
+
+    const property = document.getElementById('party-property');
+    if (property) property.innerHTML = resources.property || '<p><em>No properties acquired</em></p>';
+
+    const contacts = document.getElementById('party-contacts');
+    if (contacts) contacts.innerHTML = resources.contacts || '<p><em>No notable contacts yet</em></p>';
+}
+
+function openResourceModal() {
+    // Generic resource add - not used currently but can be extended
+    openModal('resource-modal');
+}
+
+// ===================================
+// DM Notes Functions
+// ===================================
+
+function addDMNote() {
+    document.getElementById('note-form').reset();
+    document.getElementById('note-content-input').innerHTML = '';
+    document.getElementById('note-type-hidden').value = 'dm';
+    document.getElementById('note-modal-title').textContent = 'New DM Note';
+    openModal('note-modal');
+}
+
+function renderDMNotes() {
+    const data = CampaignData.get();
+    const dmNotesList = document.getElementById('dm-notes-list');
+    if (!dmNotesList) return;
+
+    const dmNotes = data.dmNotes || [];
+    // Also include old icNotes for backward compatibility
+    const allDMNotes = [...dmNotes, ...(data.icNotes || [])];
+
+    if (allDMNotes.length === 0) {
+        dmNotesList.innerHTML = '<div class="initiative-empty"><p>No DM notes yet.</p></div>';
+        return;
+    }
+
+    dmNotesList.innerHTML = allDMNotes.map(note => `
+        <div class="note-card dm">
+            <div class="note-header">
+                <h4>${note.title}</h4>
+                <span class="note-date">${note.session}</span>
+            </div>
+            <div class="note-content">
+                ${formatNoteContent(note.content)}
+            </div>
+            <div class="note-tags">
+                ${(note.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+// ===================================
+// Session Summary Functions
+// ===================================
+
+function addSessionSummary() {
+    document.getElementById('session-summary-form').reset();
+    document.getElementById('summary-content-input').innerHTML = '';
+    const data = CampaignData.get();
+    document.getElementById('summary-session-input').value = (data.campaign.sessionNumber || 1);
+    openModal('session-summary-modal');
+}
+
+function initSessionSummaryForm() {
+    const form = document.getElementById('session-summary-form');
+    if (!form) return;
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const contentEditor = document.getElementById('summary-content-input');
+
+        const summaryData = {
+            id: Date.now(),
+            sessionNumber: parseInt(document.getElementById('summary-session-input').value) || 1,
+            datePlayed: document.getElementById('summary-date-input').value,
+            title: document.getElementById('summary-title-input').value,
+            content: contentEditor.innerHTML,
+            xpEarned: parseInt(document.getElementById('summary-xp-input').value) || 0,
+            createdAt: new Date().toISOString()
+        };
+
+        const data = CampaignData.get();
+        if (!data.sessionSummaries) data.sessionSummaries = [];
+        data.sessionSummaries.push(summaryData);
+
+        // Update XP if earned
+        if (summaryData.xpEarned > 0) {
+            data.campaign.currentXP = (data.campaign.currentXP || 0) + summaryData.xpEarned;
+        }
+
+        CampaignData.save(data);
+        renderSessionSummaries();
+        updateDashboardStats();
+        CampaignData.addActivity('📝', `Added session ${summaryData.sessionNumber} summary`);
+        closeModal('session-summary-modal');
+    });
+}
+
+function renderSessionSummaries() {
+    const data = CampaignData.get();
+    const summariesList = document.getElementById('session-summaries-list');
+    if (!summariesList) return;
+
+    const summaries = data.sessionSummaries || [];
+
+    if (summaries.length === 0) {
+        summariesList.innerHTML = '<div class="initiative-empty"><p>No session summaries yet. Add your first recap!</p></div>';
+        return;
+    }
+
+    // Sort by session number descending
+    const sorted = [...summaries].sort((a, b) => b.sessionNumber - a.sessionNumber);
+
+    summariesList.innerHTML = sorted.map(summary => `
+        <div class="session-summary-card">
+            <div class="summary-header">
+                <span class="summary-session">Session ${summary.sessionNumber}</span>
+                <span class="summary-date">${summary.datePlayed || ''}</span>
+            </div>
+            <div class="summary-content">
+                <h4 class="summary-title">${summary.title || 'Untitled Session'}</h4>
+                <div>${summary.content}</div>
+                ${summary.xpEarned > 0 ? `<span class="summary-xp">+${summary.xpEarned} XP earned</span>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+// ===================================
+// Initiative Tracker Functions
+// ===================================
+
+let selectedCombatantId = null;
+
+function loadPCsForInitiative() {
+    const data = CampaignData.get();
+    const pcSelection = document.getElementById('pc-selection');
+    if (!pcSelection) return;
+
+    const pcs = data.characters.filter(c => c.type === 'pc');
+
+    if (pcs.length === 0) {
+        pcSelection.innerHTML = '<p class="initiative-empty" style="padding: 1rem;">No PCs found. Add Player Characters in the Party tab.</p>';
+        return;
+    }
+
+    // Get active PCs from encounter data
+    const activePCs = data.encounter?.activePCs || pcs.map(pc => pc.id);
+
+    pcSelection.innerHTML = pcs.map(pc => {
+        const isActive = activePCs.includes(pc.id);
+        return `
+            <label class="pc-toggle ${isActive ? 'active' : 'inactive'}">
+                <input type="checkbox" class="pc-toggle-checkbox"
+                       data-pc-id="${pc.id}"
+                       ${isActive ? 'checked' : ''}
+                       onchange="togglePCInEncounter(${pc.id})">
+                <div class="pc-toggle-info">
+                    <div class="pc-toggle-name">${pc.name}</div>
+                    <div class="pc-toggle-class">${pc.raceClass}</div>
+                </div>
+                <div class="pc-toggle-init">${pc.initiative || '+0'}</div>
+            </label>
+        `;
+    }).join('');
+}
+
+function togglePCInEncounter(pcId) {
+    const data = CampaignData.get();
+    if (!data.encounter) data.encounter = { combatants: [], round: 1, currentTurn: 0, activePCs: [] };
+
+    const pcs = data.characters.filter(c => c.type === 'pc');
+    if (!data.encounter.activePCs) {
+        data.encounter.activePCs = pcs.map(pc => pc.id);
+    }
+
+    const index = data.encounter.activePCs.indexOf(pcId);
+    if (index > -1) {
+        data.encounter.activePCs.splice(index, 1);
+        // Remove from combatants if present
+        data.encounter.combatants = data.encounter.combatants.filter(c => c.pcId !== pcId);
+    } else {
+        data.encounter.activePCs.push(pcId);
+    }
+
+    CampaignData.save(data);
+    loadPCsForInitiative();
+    renderInitiativeList();
+}
+
+function startNewEncounter() {
+    const data = CampaignData.get();
+    if (!data.encounter) data.encounter = { combatants: [], round: 1, currentTurn: 0, activePCs: [] };
+
+    // Reset encounter
+    data.encounter.combatants = [];
+    data.encounter.round = 1;
+    data.encounter.currentTurn = 0;
+
+    // Add active PCs to combatants
+    const pcs = data.characters.filter(c => c.type === 'pc');
+    const activePCs = data.encounter.activePCs || pcs.map(pc => pc.id);
+
+    pcs.filter(pc => activePCs.includes(pc.id)).forEach(pc => {
+        const initMod = parseInt(pc.initiative) || 0;
+        data.encounter.combatants.push({
+            id: Date.now() + Math.random(),
+            pcId: pc.id,
+            name: pc.name,
+            type: 'pc',
+            raceClass: pc.raceClass,
+            initiative: 0, // To be rolled
+            currentHp: pc.currentHp,
+            maxHp: pc.maxHp,
+            ac: pc.ac,
+            initMod: initMod
+        });
+    });
+
+    CampaignData.save(data);
+    renderInitiativeList();
+    CampaignData.addActivity('⚡', 'New encounter started');
+}
+
+function initCombatNPCForm() {
+    const form = document.getElementById('combat-npc-form');
+    if (!form) return;
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const npcData = {
+            id: Date.now() + Math.random(),
+            name: document.getElementById('combat-npc-name').value,
+            type: 'npc',
+            initiative: parseInt(document.getElementById('combat-npc-init').value) || 0,
+            currentHp: parseInt(document.getElementById('combat-npc-hp').value) || 1,
+            maxHp: parseInt(document.getElementById('combat-npc-hp').value) || 1,
+            ac: parseInt(document.getElementById('combat-npc-ac').value) || 10,
+            saves: document.getElementById('combat-npc-saves').value,
+            skills: document.getElementById('combat-npc-skills').value,
+            spells: document.getElementById('combat-npc-spells').value,
+            notes: document.getElementById('combat-npc-notes').value
+        };
+
+        const data = CampaignData.get();
+        if (!data.encounter) data.encounter = { combatants: [], round: 1, currentTurn: 0, activePCs: [] };
+        data.encounter.combatants.push(npcData);
+        CampaignData.save(data);
+
+        form.reset();
+        renderInitiativeList();
+        CampaignData.addActivity('👹', `Added ${npcData.name} to combat`);
+    });
+}
+
+function renderInitiativeList() {
+    const data = CampaignData.get();
+    const initiativeList = document.getElementById('initiative-list');
+    const roundCounter = document.getElementById('round-counter');
+    if (!initiativeList) return;
+
+    const encounter = data.encounter || { combatants: [], round: 1, currentTurn: 0 };
+
+    if (roundCounter) {
+        roundCounter.textContent = `Round ${encounter.round}`;
+    }
+
+    if (encounter.combatants.length === 0) {
+        initiativeList.innerHTML = '<div class="initiative-empty"><p>No combatants yet. Add PCs and NPCs to begin!</p></div>';
+        return;
+    }
+
+    initiativeList.innerHTML = encounter.combatants.map((combatant, index) => {
+        const isActive = index === encounter.currentTurn;
+        const isDead = combatant.currentHp <= 0;
+        const hpPercent = (combatant.currentHp / combatant.maxHp) * 100;
+        let hpClass = 'hp-good';
+        if (hpPercent <= 25) hpClass = 'hp-critical';
+        else if (hpPercent <= 50) hpClass = 'hp-warning';
+
+        return `
+            <div class="initiative-item ${isActive ? 'active-turn' : ''} is-${combatant.type} ${isDead ? 'is-dead' : ''}"
+                 onclick="selectCombatant('${combatant.id}')">
+                <div class="init-order">${combatant.initiative || '?'}</div>
+                <div class="init-info">
+                    <div class="init-name">
+                        ${combatant.name}
+                        <span class="init-type-badge ${combatant.type}">${combatant.type.toUpperCase()}</span>
+                    </div>
+                    <div class="init-class">${combatant.raceClass || ''}</div>
+                </div>
+                <div class="init-stats">
+                    <div class="init-stat">
+                        <span class="init-stat-label">HP</span>
+                        <span class="init-stat-value ${hpClass}">${combatant.currentHp}/${combatant.maxHp}</span>
+                    </div>
+                    <div class="init-stat">
+                        <span class="init-stat-label">AC</span>
+                        <span class="init-stat-value">${combatant.ac}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function selectCombatant(combatantId) {
+    const data = CampaignData.get();
+    const combatant = data.encounter?.combatants.find(c => c.id == combatantId);
+    if (!combatant) return;
+
+    selectedCombatantId = combatantId;
+
+    document.getElementById('detail-name').textContent = combatant.name;
+    document.getElementById('detail-hp').textContent = `${combatant.currentHp}/${combatant.maxHp}`;
+    document.getElementById('detail-ac').textContent = combatant.ac;
+    document.getElementById('detail-init').textContent = combatant.initiative;
+    document.getElementById('detail-saves').textContent = combatant.saves || '-';
+    document.getElementById('detail-skills').textContent = combatant.skills || '-';
+    document.getElementById('detail-spells').textContent = combatant.spells || '-';
+    document.getElementById('detail-notes').textContent = combatant.notes || '-';
+
+    document.getElementById('combatant-details').style.display = 'block';
+}
+
+function closeCombatantDetails() {
+    document.getElementById('combatant-details').style.display = 'none';
+    selectedCombatantId = null;
+}
+
+function adjustHP(amount) {
+    if (!selectedCombatantId) return;
+
+    const data = CampaignData.get();
+    const combatant = data.encounter?.combatants.find(c => c.id == selectedCombatantId);
+    if (!combatant) return;
+
+    combatant.currentHp = Math.max(0, Math.min(combatant.maxHp, combatant.currentHp + amount));
+    CampaignData.save(data);
+
+    document.getElementById('detail-hp').textContent = `${combatant.currentHp}/${combatant.maxHp}`;
+    renderInitiativeList();
+}
+
+function removeCombatant() {
+    if (!selectedCombatantId) return;
+
+    const data = CampaignData.get();
+    data.encounter.combatants = data.encounter.combatants.filter(c => c.id != selectedCombatantId);
+    CampaignData.save(data);
+
+    closeCombatantDetails();
+    renderInitiativeList();
+}
+
+function sortByInitiative() {
+    const data = CampaignData.get();
+    if (!data.encounter?.combatants) return;
+
+    data.encounter.combatants.sort((a, b) => (b.initiative || 0) - (a.initiative || 0));
+    data.encounter.currentTurn = 0;
+    CampaignData.save(data);
+    renderInitiativeList();
+}
+
+function nextTurn() {
+    const data = CampaignData.get();
+    if (!data.encounter?.combatants?.length) return;
+
+    data.encounter.currentTurn++;
+    if (data.encounter.currentTurn >= data.encounter.combatants.length) {
+        data.encounter.currentTurn = 0;
+        data.encounter.round++;
+    }
+
+    CampaignData.save(data);
+    renderInitiativeList();
+}
+
+function clearEncounter() {
+    if (!confirm('Clear all combatants and reset the encounter?')) return;
+
+    const data = CampaignData.get();
+    data.encounter = { combatants: [], round: 1, currentTurn: 0, activePCs: data.encounter?.activePCs || [] };
+    CampaignData.save(data);
+    renderInitiativeList();
+    closeCombatantDetails();
+}
+
+// ===================================
+// PC Tales Tab Navigation
+// ===================================
+
+function initPCTalesTabs() {
+    const tabButtons = document.querySelectorAll('.pc-tales-container .tab-btn');
+    const tabContents = document.querySelectorAll('.pc-tales-container .tab-content');
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.dataset.tab;
+
+            tabButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === targetTab) {
+                    content.classList.add('active');
+                }
+            });
+        });
+    });
+}
+
+// ===================================
+// Campaign Notes Tab Navigation
+// ===================================
+
+function initCampaignNotesTabs() {
+    const tabButtons = document.querySelectorAll('.campaign-notes-container .tab-btn');
+    const tabContents = document.querySelectorAll('.campaign-notes-container .tab-content');
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.dataset.tab;
+
+            tabButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === targetTab) {
+                    content.classList.add('active');
+                }
+            });
+        });
+    });
+}
+
+// ===================================
 // XP Thresholds (D&D 2024e)
 // ===================================
 
@@ -1446,7 +2117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCharacterFilters();
 
     // Initialize forms
-    initStoryForm();
+    initTaleForm();
     initNoteForm();
     initNPCForm();
     initLocationForm();
@@ -1454,16 +2125,26 @@ document.addEventListener('DOMContentLoaded', () => {
     initImageForm();
     initCharacterForm();
     initCampaignForm();
+    initResourceForm();
+    initSessionSummaryForm();
+    initCombatNPCForm();
+    initPCTalesTabs();
+    initCampaignNotesTabs();
 
     // Render initial data
     renderCharacters();
-    renderStories();
+    renderTales();
+    renderResources();
     renderNotes();
+    renderDMNotes();
+    renderSessionSummaries();
     renderNPCs();
     renderLocations();
     renderQuests();
     renderGallery();
     renderUploadedFiles();
+    loadPCsForInitiative();
+    renderInitiativeList();
 
     // Load session info
     loadSessionInfo();
@@ -1504,3 +2185,24 @@ window.setCharacterType = setCharacterType;
 window.deleteCharacter = deleteCharacter;
 window.formatText = formatText;
 window.openCampaignEditModal = openCampaignEditModal;
+
+// PC Tales exports
+window.openTaleModal = openTaleModal;
+window.viewTale = viewTale;
+window.editResource = editResource;
+window.openResourceModal = openResourceModal;
+
+// Campaign Notes exports
+window.addDMNote = addDMNote;
+window.addSessionSummary = addSessionSummary;
+
+// Initiative Tracker exports
+window.togglePCInEncounter = togglePCInEncounter;
+window.startNewEncounter = startNewEncounter;
+window.selectCombatant = selectCombatant;
+window.closeCombatantDetails = closeCombatantDetails;
+window.adjustHP = adjustHP;
+window.removeCombatant = removeCombatant;
+window.sortByInitiative = sortByInitiative;
+window.nextTurn = nextTurn;
+window.clearEncounter = clearEncounter;
