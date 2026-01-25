@@ -55,31 +55,53 @@
                 <div class="card campaign-overview">
                     <div class="card-header">
                         <h3>📍 Campaign Overview</h3>
+                        <button class="btn btn-small" onclick="openCampaignEditModal()">Edit</button>
                     </div>
                     <div class="card-content">
                         <div class="campaign-image">
-                            <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&q=80" alt="Waterdeep City" class="cover-image">
+                            <div class="d20-placeholder">
+                                <svg viewBox="0 0 100 100" class="d20-icon">
+                                    <polygon points="50,5 95,30 95,70 50,95 5,70 5,30" fill="none" stroke="currentColor" stroke-width="2"/>
+                                    <polygon points="50,5 95,30 50,50 5,30" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                    <polygon points="95,30 95,70 50,50" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                    <polygon points="95,70 50,95 50,50" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                    <polygon points="50,95 5,70 50,50" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                    <polygon points="5,70 5,30 50,50" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                    <text x="50" y="58" text-anchor="middle" font-size="20" font-weight="bold" fill="currentColor">20</text>
+                                </svg>
+                            </div>
                             <div class="image-overlay">
-                                <span class="location-badge">Waterdeep</span>
+                                <span class="location-badge" id="location-badge">The High Road</span>
                             </div>
                         </div>
                         <div class="campaign-details">
                             <div class="detail-item">
                                 <span class="detail-label">Current Chapter</span>
-                                <span class="detail-value" id="current-chapter">Chapter 1: A Friend in Need</span>
+                                <span class="detail-value" id="current-chapter">Chapter 1: Along the High Road</span>
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Session Number</span>
                                 <span class="detail-value" id="session-number">Session 1</span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-label">In-Game Date</span>
-                                <span class="detail-value" id="ingame-date">1st of Marpenoth, 1492 DR</span>
+                                <span class="detail-label">Party Level</span>
+                                <span class="detail-value" id="party-level-display">Level 3</span>
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">Current Location</span>
-                                <span class="detail-value" id="current-location">The Yawning Portal</span>
+                                <span class="detail-value" id="current-location">The High Road</span>
                             </div>
+                        </div>
+                        <!-- XP Progress Bar -->
+                        <div class="xp-progress-section">
+                            <div class="xp-header">
+                                <span class="xp-label">Experience Points</span>
+                                <span class="xp-value" id="xp-display">450 / 2,700 XP</span>
+                            </div>
+                            <div class="xp-bar">
+                                <div class="xp-fill" id="xp-fill" style="width: 16.7%"></div>
+                            </div>
+                            <span class="xp-hint" id="xp-hint">2,250 XP needed for Level 4</span>
                         </div>
                     </div>
                 </div>
@@ -357,45 +379,7 @@
                         <button class="btn btn-primary" onclick="addNPC()">+ Add NPC</button>
                     </div>
                     <div class="npc-grid" id="npc-grid">
-                        <div class="npc-card">
-                            <div class="npc-portrait">
-                                <img src="https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=200&q=80" alt="Durnan">
-                            </div>
-                            <div class="npc-info">
-                                <h4>Durnan</h4>
-                                <p class="npc-role">Owner of the Yawning Portal</p>
-                                <p class="npc-description">A retired adventurer and the stoic proprietor of Waterdeep's most famous tavern. His eyes hold secrets of Undermountain that he rarely shares.</p>
-                                <div class="npc-status">
-                                    <span class="status-badge friendly">Friendly</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="npc-card">
-                            <div class="npc-portrait">
-                                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80" alt="Volo">
-                            </div>
-                            <div class="npc-info">
-                                <h4>Volothamp Geddarm (Volo)</h4>
-                                <p class="npc-role">Famous Author & Raconteur</p>
-                                <p class="npc-description">The flamboyant author of "Volo's Guide to Monsters" and many other works. Currently working on a new book about Waterdeep.</p>
-                                <div class="npc-status">
-                                    <span class="status-badge quest-giver">Quest Giver</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="npc-card">
-                            <div class="npc-portrait">
-                                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80" alt="Floon">
-                            </div>
-                            <div class="npc-info">
-                                <h4>Floon Blagmaar</h4>
-                                <p class="npc-role">Volo's Friend</p>
-                                <p class="npc-description">A handsome but somewhat vapid young man who has gone missing. His disappearance kicks off the adventure.</p>
-                                <div class="npc-status">
-                                    <span class="status-badge missing">Missing</span>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- NPCs rendered dynamically by JavaScript -->
                     </div>
                 </div>
 
@@ -405,36 +389,7 @@
                         <button class="btn btn-primary" onclick="addLocation()">+ Add Location</button>
                     </div>
                     <div class="locations-list" id="locations-list">
-                        <div class="location-card">
-                            <div class="location-image">
-                                <img src="https://images.unsplash.com/photo-1555992336-03a23c7b20ee?w=400&q=80" alt="The Yawning Portal">
-                            </div>
-                            <div class="location-info">
-                                <h4>The Yawning Portal</h4>
-                                <p class="location-ward">Castle Ward</p>
-                                <p class="location-description">The most famous tavern in all of Waterdeep, built around the entrance to Undermountain. Adventurers come from across the Sword Coast to test their mettle in the depths below.</p>
-                                <div class="location-details">
-                                    <span class="detail">🍺 Tavern</span>
-                                    <span class="detail">⚔️ Dungeon Entrance</span>
-                                    <span class="detail">📍 Known</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="location-card">
-                            <div class="location-image">
-                                <img src="https://images.unsplash.com/photo-1519999482648-25049ddd37b1?w=400&q=80" alt="Dock Ward">
-                            </div>
-                            <div class="location-info">
-                                <h4>The Dock Ward</h4>
-                                <p class="location-ward">Dock Ward</p>
-                                <p class="location-description">The roughest and most dangerous ward of Waterdeep. Home to sailors, warehouses, and those who prefer to conduct business away from prying eyes.</p>
-                                <div class="location-details">
-                                    <span class="detail">🚢 Harbor</span>
-                                    <span class="detail">⚠️ Dangerous</span>
-                                    <span class="detail">📍 Known</span>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Locations rendered dynamically by JavaScript -->
                     </div>
                 </div>
 
@@ -955,77 +910,7 @@
             </div>
 
             <div class="gallery-grid" id="gallery-grid">
-                <!-- Waterdeep Map -->
-                <div class="gallery-item" data-category="maps">
-                    <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&q=80" alt="Waterdeep City Map">
-                    <div class="gallery-overlay">
-                        <h4>City of Waterdeep</h4>
-                        <p>The City of Splendors</p>
-                    </div>
-                </div>
-
-                <!-- Yawning Portal -->
-                <div class="gallery-item" data-category="locations">
-                    <img src="https://images.unsplash.com/photo-1555992336-03a23c7b20ee?w=600&q=80" alt="The Yawning Portal">
-                    <div class="gallery-overlay">
-                        <h4>The Yawning Portal</h4>
-                        <p>Famous Tavern & Dungeon Entrance</p>
-                    </div>
-                </div>
-
-                <!-- Fantasy Street -->
-                <div class="gallery-item" data-category="locations">
-                    <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&q=80" alt="Waterdeep Streets">
-                    <div class="gallery-overlay">
-                        <h4>Streets of Waterdeep</h4>
-                        <p>The bustling city streets</p>
-                    </div>
-                </div>
-
-                <!-- Harbor -->
-                <div class="gallery-item" data-category="locations">
-                    <img src="https://images.unsplash.com/photo-1519999482648-25049ddd37b1?w=600&q=80" alt="Waterdeep Harbor">
-                    <div class="gallery-overlay">
-                        <h4>Waterdeep Harbor</h4>
-                        <p>The Dock Ward</p>
-                    </div>
-                </div>
-
-                <!-- Noble District -->
-                <div class="gallery-item" data-category="locations">
-                    <img src="https://images.unsplash.com/photo-1464146072230-91cabc968266?w=600&q=80" alt="Noble District">
-                    <div class="gallery-overlay">
-                        <h4>Sea Ward</h4>
-                        <p>Home of Waterdeep's Nobility</p>
-                    </div>
-                </div>
-
-                <!-- Underground -->
-                <div class="gallery-item" data-category="locations">
-                    <img src="https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=600&q=80" alt="Underground">
-                    <div class="gallery-overlay">
-                        <h4>The Sewers</h4>
-                        <p>Beneath the streets</p>
-                    </div>
-                </div>
-
-                <!-- Treasure -->
-                <div class="gallery-item" data-category="items">
-                    <img src="https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=600&q=80" alt="Dragon Hoard">
-                    <div class="gallery-overlay">
-                        <h4>The Dragon Hoard</h4>
-                        <p>500,000 Gold Dragons</p>
-                    </div>
-                </div>
-
-                <!-- Magic Items -->
-                <div class="gallery-item" data-category="items">
-                    <img src="https://images.unsplash.com/photo-1551269901-5c5e14c25df7?w=600&q=80" alt="Magic Items">
-                    <div class="gallery-overlay">
-                        <h4>Magical Artifacts</h4>
-                        <p>Items of Power</p>
-                    </div>
-                </div>
+                <!-- Gallery items rendered dynamically by JavaScript -->
             </div>
         </section>
     </main>
@@ -1420,6 +1305,49 @@
                             <button type="submit" class="btn btn-primary">Save Character</button>
                             <button type="button" class="btn btn-secondary" onclick="closeModal('character-modal')">Cancel</button>
                         </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaign Edit Modal -->
+    <div id="campaign-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Campaign Overview</h3>
+                <button class="modal-close" onclick="closeModal('campaign-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="campaign-form">
+                    <div class="form-group">
+                        <label for="campaign-chapter-input">Current Chapter</label>
+                        <input type="text" id="campaign-chapter-input" placeholder="e.g., Chapter 1: Along the High Road">
+                    </div>
+                    <div class="form-group">
+                        <label for="campaign-session-input">Session Number</label>
+                        <input type="number" id="campaign-session-input" min="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="campaign-location-input">Current Location</label>
+                        <input type="text" id="campaign-location-input" placeholder="e.g., The High Road">
+                    </div>
+                    <div class="form-group">
+                        <label for="campaign-level-input">Party Level</label>
+                        <input type="number" id="campaign-level-input" min="1" max="20" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="campaign-xp-input">Current XP</label>
+                        <input type="number" id="campaign-xp-input" min="0" value="0">
+                        <span class="xp-hint" id="modal-xp-hint">XP needed for next level will be calculated automatically</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="campaign-gold-input">Party Gold</label>
+                        <input type="number" id="campaign-gold-input" min="0" value="0">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('campaign-modal')">Cancel</button>
                     </div>
                 </form>
             </div>

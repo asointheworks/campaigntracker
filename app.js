@@ -4,6 +4,12 @@
  */
 
 // ===================================
+// D20 Placeholder Image (SVG Data URL)
+// ===================================
+
+const D20_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231a1a2e' width='100' height='100'/%3E%3Cpolygon points='50,10 85,30 85,70 50,90 15,70 15,30' fill='none' stroke='%23d4af37' stroke-width='2'/%3E%3Cpolygon points='50,10 85,30 50,50 15,30' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='85,30 85,70 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='85,70 50,90 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='50,90 15,70 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='15,70 15,30 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Ctext x='50' y='58' text-anchor='middle' font-size='20' font-weight='bold' fill='%23d4af37' font-family='serif'%3E20%3C/text%3E%3C/svg%3E";
+
+// ===================================
 // Data Management
 // ===================================
 
@@ -12,13 +18,13 @@ const CampaignData = {
     defaults: {
         campaign: {
             name: "Waterdeep: Dragon Heist",
-            currentChapter: "Chapter 1: A Friend in Need",
+            currentChapter: "Chapter 1: Along the High Road",
             sessionNumber: 1,
-            ingameDate: "1st of Marpenoth, 1492 DR",
-            currentLocation: "The Yawning Portal",
-            partyLevel: 1,
+            currentLocation: "The High Road",
+            partyLevel: 3,
+            currentXP: 450,
             totalGold: 0,
-            sessionsPlayed: 0,
+            sessionsPlayed: 1,
             nextSessionDate: "",
             sessionNotes: "",
             synopsis: ""
@@ -35,7 +41,7 @@ const CampaignData = {
                 maxHp: 35,
                 ac: 14,
                 initiative: '+1',
-                portrait: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80',
+                portrait: D20_PLACEHOLDER,
                 background: '<p>Krak is a gruff but kindhearted <strong>caravan leader</strong> who has traversed the Sword Coast countless times. Despite his intimidating appearance, he has a deep love for animals - especially oxen.</p><p>He was <em>devastated</em> by the loss of <strong>Petunia the Ox</strong> during a goblin ambush on the road to Waterdeep. Petunia had been his loyal companion for over eight years, and her death has left him seeking both vengeance and purpose.</p><p>Krak now frequents the Yawning Portal, drowning his sorrows and looking for adventurers who might help him track down the goblins responsible.</p>',
                 createdAt: new Date().toISOString()
             }
@@ -555,7 +561,7 @@ function initNPCForm() {
             id: Date.now(),
             name: document.getElementById('npc-name-input').value,
             role: document.getElementById('npc-role-input').value,
-            image: document.getElementById('npc-image-input').value || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+            image: document.getElementById('npc-image-input').value || D20_PLACEHOLDER,
             description: document.getElementById('npc-description-input').value,
             status: document.getElementById('npc-status-select').value
         };
@@ -580,7 +586,7 @@ function renderNPCs() {
             id: 'durnan',
             name: 'Durnan',
             role: 'Owner of the Yawning Portal',
-            image: 'https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=200&q=80',
+            image: D20_PLACEHOLDER,
             description: 'A retired adventurer and the stoic proprietor of Waterdeep\'s most famous tavern. His eyes hold secrets of Undermountain that he rarely shares.',
             status: 'friendly'
         },
@@ -588,7 +594,7 @@ function renderNPCs() {
             id: 'volo',
             name: 'Volothamp Geddarm (Volo)',
             role: 'Famous Author & Raconteur',
-            image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80',
+            image: D20_PLACEHOLDER,
             description: 'The flamboyant author of "Volo\'s Guide to Monsters" and many other works. Currently working on a new book about Waterdeep.',
             status: 'quest-giver'
         },
@@ -596,7 +602,7 @@ function renderNPCs() {
             id: 'floon',
             name: 'Floon Blagmaar',
             role: 'Volo\'s Friend',
-            image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80',
+            image: D20_PLACEHOLDER,
             description: 'A handsome but somewhat vapid young man who has gone missing. His disappearance kicks off the adventure.',
             status: 'missing'
         }
@@ -639,7 +645,7 @@ function initLocationForm() {
             id: Date.now(),
             name: document.getElementById('location-name-input').value,
             ward: document.getElementById('location-ward-input').value,
-            image: document.getElementById('location-image-input').value || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80',
+            image: document.getElementById('location-image-input').value || D20_PLACEHOLDER,
             description: document.getElementById('location-description-input').value,
             tags: document.getElementById('location-tags-input').value.split(',').map(t => t.trim()).filter(t => t)
         };
@@ -664,7 +670,7 @@ function renderLocations() {
             id: 'yawning-portal',
             name: 'The Yawning Portal',
             ward: 'Castle Ward',
-            image: 'https://images.unsplash.com/photo-1555992336-03a23c7b20ee?w=400&q=80',
+            image: D20_PLACEHOLDER,
             description: 'The most famous tavern in all of Waterdeep, built around the entrance to Undermountain. Adventurers come from across the Sword Coast to test their mettle in the depths below.',
             tags: ['Tavern', 'Dungeon Entrance', 'Known']
         },
@@ -672,7 +678,7 @@ function renderLocations() {
             id: 'dock-ward',
             name: 'The Dock Ward',
             ward: 'Dock Ward',
-            image: 'https://images.unsplash.com/photo-1519999482648-25049ddd37b1?w=400&q=80',
+            image: D20_PLACEHOLDER,
             description: 'The roughest and most dangerous ward of Waterdeep. Home to sailors, warehouses, and those who prefer to conduct business away from prying eyes.',
             tags: ['Harbor', 'Dangerous', 'Known']
         }
@@ -798,14 +804,14 @@ function renderGallery() {
 
     // Default gallery items
     const defaultItems = [
-        { id: 'city', url: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&q=80', title: 'City of Waterdeep', description: 'The City of Splendors', category: 'maps' },
-        { id: 'tavern', url: 'https://images.unsplash.com/photo-1555992336-03a23c7b20ee?w=600&q=80', title: 'The Yawning Portal', description: 'Famous Tavern & Dungeon Entrance', category: 'locations' },
-        { id: 'streets', url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&q=80', title: 'Streets of Waterdeep', description: 'The bustling city streets', category: 'locations' },
-        { id: 'harbor', url: 'https://images.unsplash.com/photo-1519999482648-25049ddd37b1?w=600&q=80', title: 'Waterdeep Harbor', description: 'The Dock Ward', category: 'locations' },
-        { id: 'noble', url: 'https://images.unsplash.com/photo-1464146072230-91cabc968266?w=600&q=80', title: 'Sea Ward', description: 'Home of Waterdeep\'s Nobility', category: 'locations' },
-        { id: 'sewers', url: 'https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=600&q=80', title: 'The Sewers', description: 'Beneath the streets', category: 'locations' },
-        { id: 'treasure', url: 'https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=600&q=80', title: 'The Dragon Hoard', description: '500,000 Gold Dragons', category: 'items' },
-        { id: 'magic', url: 'https://images.unsplash.com/photo-1551269901-5c5e14c25df7?w=600&q=80', title: 'Magical Artifacts', description: 'Items of Power', category: 'items' }
+        { id: 'city', url: D20_PLACEHOLDER, title: 'City of Waterdeep', description: 'The City of Splendors', category: 'maps' },
+        { id: 'tavern', url: D20_PLACEHOLDER, title: 'The Yawning Portal', description: 'Famous Tavern & Dungeon Entrance', category: 'locations' },
+        { id: 'streets', url: D20_PLACEHOLDER, title: 'Streets of Waterdeep', description: 'The bustling city streets', category: 'locations' },
+        { id: 'harbor', url: D20_PLACEHOLDER, title: 'Waterdeep Harbor', description: 'The Dock Ward', category: 'locations' },
+        { id: 'noble', url: D20_PLACEHOLDER, title: 'Sea Ward', description: 'Home of Waterdeep\'s Nobility', category: 'locations' },
+        { id: 'sewers', url: D20_PLACEHOLDER, title: 'The Sewers', description: 'Beneath the streets', category: 'locations' },
+        { id: 'treasure', url: D20_PLACEHOLDER, title: 'The Dragon Hoard', description: '500,000 Gold Dragons', category: 'items' },
+        { id: 'magic', url: D20_PLACEHOLDER, title: 'Magical Artifacts', description: 'Items of Power', category: 'items' }
     ];
 
     const allItems = [...defaultItems, ...data.gallery];
@@ -1190,10 +1196,7 @@ function deleteCharacter() {
 }
 
 function getDefaultPortrait(type) {
-    if (type === 'npc') {
-        return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80';
-    }
-    return 'https://images.unsplash.com/photo-1589254065878-42c9da997008?w=400&q=80';
+    return D20_PLACEHOLDER;
 }
 
 function renderCharacters(filter = 'all') {
@@ -1295,19 +1298,136 @@ function saveCharacterData() {
 }
 
 // ===================================
+// XP Thresholds (D&D 2024e)
+// ===================================
+
+const XP_THRESHOLDS = {
+    1: 0,
+    2: 300,
+    3: 900,
+    4: 2700,
+    5: 6500,
+    6: 14000,
+    7: 23000,
+    8: 34000,
+    9: 48000,
+    10: 64000,
+    11: 85000,
+    12: 100000,
+    13: 120000,
+    14: 140000,
+    15: 165000,
+    16: 195000,
+    17: 225000,
+    18: 265000,
+    19: 305000,
+    20: 355000
+};
+
+function getXPForLevel(level) {
+    return XP_THRESHOLDS[level] || 0;
+}
+
+function getXPForNextLevel(level) {
+    if (level >= 20) return XP_THRESHOLDS[20];
+    return XP_THRESHOLDS[level + 1] || 0;
+}
+
+function calculateXPProgress(currentXP, level) {
+    const currentLevelXP = getXPForLevel(level);
+    const nextLevelXP = getXPForNextLevel(level);
+    const xpIntoLevel = currentXP - currentLevelXP;
+    const xpNeeded = nextLevelXP - currentLevelXP;
+
+    if (level >= 20) return 100;
+    return Math.min(100, Math.round((xpIntoLevel / xpNeeded) * 100));
+}
+
+// ===================================
 // Dashboard Stats
 // ===================================
 
 function updateDashboardStats() {
     const data = CampaignData.get();
+    const level = data.campaign.partyLevel || 3;
+    const currentXP = data.campaign.currentXP || 450;
+    const nextLevelXP = getXPForNextLevel(level);
+    const xpNeeded = nextLevelXP - currentXP;
+    const xpProgress = calculateXPProgress(currentXP, level);
 
-    document.getElementById('party-level').textContent = data.campaign.partyLevel || 1;
+    document.getElementById('party-level').textContent = level;
     document.getElementById('total-gold').textContent = data.campaign.totalGold || 0;
-    document.getElementById('sessions-played').textContent = data.campaign.sessionsPlayed || 0;
-    document.getElementById('current-chapter').textContent = data.campaign.currentChapter || 'Chapter 1: A Friend in Need';
+    document.getElementById('sessions-played').textContent = data.campaign.sessionsPlayed || 1;
+    document.getElementById('current-chapter').textContent = data.campaign.currentChapter || 'Chapter 1: Along the High Road';
     document.getElementById('session-number').textContent = `Session ${data.campaign.sessionNumber || 1}`;
-    document.getElementById('ingame-date').textContent = data.campaign.ingameDate || '1st of Marpenoth, 1492 DR';
-    document.getElementById('current-location').textContent = data.campaign.currentLocation || 'The Yawning Portal';
+    document.getElementById('current-location').textContent = data.campaign.currentLocation || 'The High Road';
+    document.getElementById('party-level-display').textContent = `Level ${level}`;
+
+    // Update location badge
+    const locationBadge = document.getElementById('location-badge');
+    if (locationBadge) {
+        locationBadge.textContent = data.campaign.currentLocation || 'The High Road';
+    }
+
+    // Update XP display
+    const xpDisplay = document.getElementById('xp-display');
+    const xpFill = document.getElementById('xp-fill');
+    const xpHint = document.getElementById('xp-hint');
+
+    if (xpDisplay) {
+        xpDisplay.textContent = `${currentXP.toLocaleString()} / ${nextLevelXP.toLocaleString()} XP`;
+    }
+    if (xpFill) {
+        xpFill.style.width = `${xpProgress}%`;
+    }
+    if (xpHint) {
+        if (level >= 20) {
+            xpHint.textContent = 'Maximum level reached!';
+        } else {
+            xpHint.textContent = `${xpNeeded.toLocaleString()} XP needed for Level ${level + 1}`;
+        }
+    }
+}
+
+// ===================================
+// Campaign Edit Modal
+// ===================================
+
+function openCampaignEditModal() {
+    const data = CampaignData.get();
+
+    document.getElementById('campaign-chapter-input').value = data.campaign.currentChapter || 'Chapter 1: Along the High Road';
+    document.getElementById('campaign-session-input').value = data.campaign.sessionNumber || 1;
+    document.getElementById('campaign-location-input').value = data.campaign.currentLocation || 'The High Road';
+    document.getElementById('campaign-level-input').value = data.campaign.partyLevel || 3;
+    document.getElementById('campaign-xp-input').value = data.campaign.currentXP || 450;
+    document.getElementById('campaign-gold-input').value = data.campaign.totalGold || 0;
+
+    openModal('campaign-modal');
+}
+
+function initCampaignForm() {
+    const form = document.getElementById('campaign-form');
+    if (!form) return;
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const data = CampaignData.get();
+
+        data.campaign.currentChapter = document.getElementById('campaign-chapter-input').value;
+        data.campaign.sessionNumber = parseInt(document.getElementById('campaign-session-input').value) || 1;
+        data.campaign.currentLocation = document.getElementById('campaign-location-input').value;
+        data.campaign.partyLevel = parseInt(document.getElementById('campaign-level-input').value) || 1;
+        data.campaign.currentXP = parseInt(document.getElementById('campaign-xp-input').value) || 0;
+        data.campaign.totalGold = parseInt(document.getElementById('campaign-gold-input').value) || 0;
+        data.campaign.sessionsPlayed = data.campaign.sessionNumber;
+
+        CampaignData.save(data);
+        updateDashboardStats();
+        CampaignData.addActivity('📍', 'Campaign overview updated');
+        closeModal('campaign-modal');
+    });
 }
 
 // ===================================
@@ -1333,6 +1453,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initQuestForm();
     initImageForm();
     initCharacterForm();
+    initCampaignForm();
 
     // Render initial data
     renderCharacters();
@@ -1382,3 +1503,4 @@ window.openCharacterModal = openCharacterModal;
 window.setCharacterType = setCharacterType;
 window.deleteCharacter = deleteCharacter;
 window.formatText = formatText;
+window.openCampaignEditModal = openCampaignEditModal;
