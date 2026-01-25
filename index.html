@@ -154,7 +154,20 @@
                             <p><em>This homebrewed version incorporates the updated D&D 2024 rules, expanded faction interactions, and additional character-driven storylines.</em></p>
                         </div>
                         <div id="synopsis-edit" class="synopsis-edit hidden">
-                            <textarea id="synopsis-textarea" class="synopsis-textarea"></textarea>
+                            <div class="rich-editor" id="synopsis-editor">
+                                <div class="editor-toolbar">
+                                    <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                    <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                    <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                    <span class="toolbar-divider"></span>
+                                    <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                    <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                                    <span class="toolbar-divider"></span>
+                                    <button type="button" onclick="formatText('formatBlock', 'h4')" title="Heading">H</button>
+                                    <button type="button" onclick="formatText('formatBlock', 'blockquote')" title="Quote">"</button>
+                                </div>
+                                <div class="editor-content synopsis-editor-content" id="synopsis-textarea" contenteditable="true" data-placeholder="Write your campaign synopsis..."></div>
+                            </div>
                             <div class="edit-actions">
                                 <button class="btn btn-primary" onclick="saveSynopsis()">Save</button>
                                 <button class="btn btn-secondary" onclick="cancelEditSynopsis()">Cancel</button>
@@ -168,145 +181,20 @@
         <!-- Party Section -->
         <section id="party" class="content-section">
             <div class="section-header">
-                <h2>The Party</h2>
-                <p class="section-subtitle">Heroes of Waterdeep</p>
+                <h2>Characters</h2>
+                <p class="section-subtitle">Heroes & Allies of Waterdeep</p>
+                <button class="btn btn-primary" onclick="openCharacterModal()">+ Add Character</button>
+            </div>
+
+            <!-- Character Filters -->
+            <div class="character-filters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="pc">Player Characters</button>
+                <button class="filter-btn" data-filter="npc">NPCs</button>
             </div>
 
             <div class="party-grid" id="party-grid">
-                <!-- Player 1 -->
-                <div class="character-card" data-player="1">
-                    <div class="character-portrait">
-                        <img src="https://images.unsplash.com/photo-1589254065878-42c9da997008?w=400&q=80" alt="Character Portrait" class="portrait-img">
-                        <div class="level-badge">Lvl <span class="char-level">1</span></div>
-                    </div>
-                    <div class="character-info">
-                        <h3 class="char-name" contenteditable="true">Tharion Duskwalker</h3>
-                        <p class="char-race-class" contenteditable="true">Half-Elf Rogue (Thief)</p>
-                        <p class="char-player">Player: <span contenteditable="true">Player 1</span></p>
-                        <div class="char-stats">
-                            <div class="hp-bar">
-                                <div class="hp-fill" style="width: 100%"></div>
-                                <span class="hp-text">HP: <span class="current-hp">10</span>/<span class="max-hp">10</span></span>
-                            </div>
-                            <div class="stat-row">
-                                <span class="mini-stat">AC: <span contenteditable="true">14</span></span>
-                                <span class="mini-stat">Init: <span contenteditable="true">+3</span></span>
-                            </div>
-                        </div>
-                        <div class="char-background">
-                            <p class="background-text" contenteditable="true">A street-smart urchin who grew up in Waterdeep's Dock Ward, seeking to uncover the truth about their missing parents.</p>
-                        </div>
-                    </div>
-                    <button class="btn btn-small edit-char-btn" onclick="openCharacterModal(1)">Full Details</button>
-                </div>
-
-                <!-- Player 2 -->
-                <div class="character-card" data-player="2">
-                    <div class="character-portrait">
-                        <img src="https://images.unsplash.com/photo-1551269901-5c5e14c25df7?w=400&q=80" alt="Character Portrait" class="portrait-img">
-                        <div class="level-badge">Lvl <span class="char-level">1</span></div>
-                    </div>
-                    <div class="character-info">
-                        <h3 class="char-name" contenteditable="true">Seraphina Brightforge</h3>
-                        <p class="char-race-class" contenteditable="true">Dwarf Cleric (Life Domain)</p>
-                        <p class="char-player">Player: <span contenteditable="true">Player 2</span></p>
-                        <div class="char-stats">
-                            <div class="hp-bar">
-                                <div class="hp-fill" style="width: 100%"></div>
-                                <span class="hp-text">HP: <span class="current-hp">11</span>/<span class="max-hp">11</span></span>
-                            </div>
-                            <div class="stat-row">
-                                <span class="mini-stat">AC: <span contenteditable="true">18</span></span>
-                                <span class="mini-stat">Init: <span contenteditable="true">+0</span></span>
-                            </div>
-                        </div>
-                        <div class="char-background">
-                            <p class="background-text" contenteditable="true">A devout follower of Moradin, sent to Waterdeep to establish stronger ties with the city's dwarven community.</p>
-                        </div>
-                    </div>
-                    <button class="btn btn-small edit-char-btn" onclick="openCharacterModal(2)">Full Details</button>
-                </div>
-
-                <!-- Player 3 -->
-                <div class="character-card" data-player="3">
-                    <div class="character-portrait">
-                        <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&q=80" alt="Character Portrait" class="portrait-img">
-                        <div class="level-badge">Lvl <span class="char-level">1</span></div>
-                    </div>
-                    <div class="character-info">
-                        <h3 class="char-name" contenteditable="true">Zephyr Moonwhisper</h3>
-                        <p class="char-race-class" contenteditable="true">Elf Wizard (Evocation)</p>
-                        <p class="char-player">Player: <span contenteditable="true">Player 3</span></p>
-                        <div class="char-stats">
-                            <div class="hp-bar">
-                                <div class="hp-fill" style="width: 100%"></div>
-                                <span class="hp-text">HP: <span class="current-hp">8</span>/<span class="max-hp">8</span></span>
-                            </div>
-                            <div class="stat-row">
-                                <span class="mini-stat">AC: <span contenteditable="true">12</span></span>
-                                <span class="mini-stat">Init: <span contenteditable="true">+2</span></span>
-                            </div>
-                        </div>
-                        <div class="char-background">
-                            <p class="background-text" contenteditable="true">A curious scholar from Evermeet, drawn to Waterdeep by rumors of ancient magical artifacts hidden within the city.</p>
-                        </div>
-                    </div>
-                    <button class="btn btn-small edit-char-btn" onclick="openCharacterModal(3)">Full Details</button>
-                </div>
-
-                <!-- Player 4 -->
-                <div class="character-card" data-player="4">
-                    <div class="character-portrait">
-                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80" alt="Character Portrait" class="portrait-img">
-                        <div class="level-badge">Lvl <span class="char-level">1</span></div>
-                    </div>
-                    <div class="character-info">
-                        <h3 class="char-name" contenteditable="true">Grimjaw Ironhide</h3>
-                        <p class="char-race-class" contenteditable="true">Goliath Fighter (Champion)</p>
-                        <p class="char-player">Player: <span contenteditable="true">Player 4</span></p>
-                        <div class="char-stats">
-                            <div class="hp-bar">
-                                <div class="hp-fill" style="width: 100%"></div>
-                                <span class="hp-text">HP: <span class="current-hp">13</span>/<span class="max-hp">13</span></span>
-                            </div>
-                            <div class="stat-row">
-                                <span class="mini-stat">AC: <span contenteditable="true">16</span></span>
-                                <span class="mini-stat">Init: <span contenteditable="true">+1</span></span>
-                            </div>
-                        </div>
-                        <div class="char-background">
-                            <p class="background-text" contenteditable="true">A former gladiator who won their freedom and now works as a bodyguard in Waterdeep's North Ward.</p>
-                        </div>
-                    </div>
-                    <button class="btn btn-small edit-char-btn" onclick="openCharacterModal(4)">Full Details</button>
-                </div>
-
-                <!-- Player 5 -->
-                <div class="character-card" data-player="5">
-                    <div class="character-portrait">
-                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80" alt="Character Portrait" class="portrait-img">
-                        <div class="level-badge">Lvl <span class="char-level">1</span></div>
-                    </div>
-                    <div class="character-info">
-                        <h3 class="char-name" contenteditable="true">Lyra Shadowmend</h3>
-                        <p class="char-race-class" contenteditable="true">Tiefling Warlock (Archfey)</p>
-                        <p class="char-player">Player: <span contenteditable="true">Player 5</span></p>
-                        <div class="char-stats">
-                            <div class="hp-bar">
-                                <div class="hp-fill" style="width: 100%"></div>
-                                <span class="hp-text">HP: <span class="current-hp">10</span>/<span class="max-hp">10</span></span>
-                            </div>
-                            <div class="stat-row">
-                                <span class="mini-stat">AC: <span contenteditable="true">13</span></span>
-                                <span class="mini-stat">Init: <span contenteditable="true">+2</span></span>
-                            </div>
-                        </div>
-                        <div class="char-background">
-                            <p class="background-text" contenteditable="true">A mysterious performer who made a pact with a fey entity, now searching for a way to fulfill - or escape - their bargain.</p>
-                        </div>
-                    </div>
-                    <button class="btn btn-small edit-char-btn" onclick="openCharacterModal(5)">Full Details</button>
-                </div>
+                <!-- Characters will be rendered dynamically -->
             </div>
 
             <!-- DM Card -->
@@ -637,7 +525,19 @@
                                 </ul>
                             </div>
                             <div class="rule-edit hidden">
-                                <textarea class="rule-textarea" id="house-rules-edit"></textarea>
+                                <div class="rich-editor">
+                                    <div class="editor-toolbar">
+                                        <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                        <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                        <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                        <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('formatBlock', 'h4')" title="Heading">H</button>
+                                    </div>
+                                    <div class="editor-content rule-editor-content" id="house-rules-edit" contenteditable="true"></div>
+                                </div>
                                 <div class="edit-actions">
                                     <button class="btn btn-primary" onclick="saveRules('house-rules')">Save</button>
                                     <button class="btn btn-secondary" onclick="cancelEditRules('house-rules')">Cancel</button>
@@ -684,7 +584,19 @@
                                 </ul>
                             </div>
                             <div class="rule-edit hidden">
-                                <textarea class="rule-textarea" id="combat-edit"></textarea>
+                                <div class="rich-editor">
+                                    <div class="editor-toolbar">
+                                        <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                        <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                        <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                        <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('formatBlock', 'h4')" title="Heading">H</button>
+                                    </div>
+                                    <div class="editor-content rule-editor-content" id="combat-edit" contenteditable="true"></div>
+                                </div>
                                 <div class="edit-actions">
                                     <button class="btn btn-primary" onclick="saveRules('combat')">Save</button>
                                     <button class="btn btn-secondary" onclick="cancelEditRules('combat')">Cancel</button>
@@ -722,7 +634,19 @@
                                 </ul>
                             </div>
                             <div class="rule-edit hidden">
-                                <textarea class="rule-textarea" id="magic-edit"></textarea>
+                                <div class="rich-editor">
+                                    <div class="editor-toolbar">
+                                        <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                        <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                        <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                        <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('formatBlock', 'h4')" title="Heading">H</button>
+                                    </div>
+                                    <div class="editor-content rule-editor-content" id="magic-edit" contenteditable="true"></div>
+                                </div>
                                 <div class="edit-actions">
                                     <button class="btn btn-primary" onclick="saveRules('magic')">Save</button>
                                     <button class="btn btn-secondary" onclick="cancelEditRules('magic')">Cancel</button>
@@ -760,7 +684,19 @@
                                 </ul>
                             </div>
                             <div class="rule-edit hidden">
-                                <textarea class="rule-textarea" id="exploration-edit"></textarea>
+                                <div class="rich-editor">
+                                    <div class="editor-toolbar">
+                                        <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                        <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                        <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                        <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('formatBlock', 'h4')" title="Heading">H</button>
+                                    </div>
+                                    <div class="editor-content rule-editor-content" id="exploration-edit" contenteditable="true"></div>
+                                </div>
                                 <div class="edit-actions">
                                     <button class="btn btn-primary" onclick="saveRules('exploration')">Save</button>
                                     <button class="btn btn-secondary" onclick="cancelEditRules('exploration')">Cancel</button>
@@ -802,7 +738,19 @@
                                 </ul>
                             </div>
                             <div class="rule-edit hidden">
-                                <textarea class="rule-textarea" id="social-edit"></textarea>
+                                <div class="rich-editor">
+                                    <div class="editor-toolbar">
+                                        <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                        <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                        <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                        <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('formatBlock', 'h4')" title="Heading">H</button>
+                                    </div>
+                                    <div class="editor-content rule-editor-content" id="social-edit" contenteditable="true"></div>
+                                </div>
                                 <div class="edit-actions">
                                     <button class="btn btn-primary" onclick="saveRules('social')">Save</button>
                                     <button class="btn btn-secondary" onclick="cancelEditRules('social')">Cancel</button>
@@ -845,7 +793,19 @@
                                 </ul>
                             </div>
                             <div class="rule-edit hidden">
-                                <textarea class="rule-textarea" id="resting-edit"></textarea>
+                                <div class="rich-editor">
+                                    <div class="editor-toolbar">
+                                        <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                        <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                        <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                        <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('formatBlock', 'h4')" title="Heading">H</button>
+                                    </div>
+                                    <div class="editor-content rule-editor-content" id="resting-edit" contenteditable="true"></div>
+                                </div>
                                 <div class="edit-actions">
                                     <button class="btn btn-primary" onclick="saveRules('resting')">Save</button>
                                     <button class="btn btn-secondary" onclick="cancelEditRules('resting')">Cancel</button>
@@ -892,7 +852,19 @@
                                 </ul>
                             </div>
                             <div class="rule-edit hidden">
-                                <textarea class="rule-textarea" id="death-edit"></textarea>
+                                <div class="rich-editor">
+                                    <div class="editor-toolbar">
+                                        <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                        <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                        <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                        <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('formatBlock', 'h4')" title="Heading">H</button>
+                                    </div>
+                                    <div class="editor-content rule-editor-content" id="death-edit" contenteditable="true"></div>
+                                </div>
                                 <div class="edit-actions">
                                     <button class="btn btn-primary" onclick="saveRules('death')">Save</button>
                                     <button class="btn btn-secondary" onclick="cancelEditRules('death')">Cancel</button>
@@ -941,7 +913,19 @@
                                 </ul>
                             </div>
                             <div class="rule-edit hidden">
-                                <textarea class="rule-textarea" id="homebrew-edit"></textarea>
+                                <div class="rich-editor">
+                                    <div class="editor-toolbar">
+                                        <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                        <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                        <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                        <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                                        <span class="toolbar-divider"></span>
+                                        <button type="button" onclick="formatText('formatBlock', 'h4')" title="Heading">H</button>
+                                    </div>
+                                    <div class="editor-content rule-editor-content" id="homebrew-edit" contenteditable="true"></div>
+                                </div>
                                 <div class="edit-actions">
                                     <button class="btn btn-primary" onclick="saveRules('homebrew')">Save</button>
                                     <button class="btn btn-secondary" onclick="cancelEditRules('homebrew')">Cancel</button>
@@ -1074,8 +1058,21 @@
                         <input type="text" id="story-author-input" required>
                     </div>
                     <div class="form-group">
-                        <label for="story-content-input">Content</label>
-                        <textarea id="story-content-input" rows="15" required></textarea>
+                        <label>Content</label>
+                        <div class="rich-editor" id="story-content-editor">
+                            <div class="editor-toolbar">
+                                <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                <span class="toolbar-divider"></span>
+                                <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                                <span class="toolbar-divider"></span>
+                                <button type="button" onclick="formatText('formatBlock', 'h3')" title="Heading">H</button>
+                                <button type="button" onclick="formatText('formatBlock', 'blockquote')" title="Quote">"</button>
+                            </div>
+                            <div class="editor-content" id="story-content-input" contenteditable="true" data-placeholder="Write your story here..."></div>
+                        </div>
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">Save Story</button>
@@ -1105,8 +1102,20 @@
                         <input type="text" id="note-session-input" placeholder="e.g., Session 1, Pre-Session">
                     </div>
                     <div class="form-group">
-                        <label for="note-content-input">Content</label>
-                        <textarea id="note-content-input" rows="10" required></textarea>
+                        <label>Content</label>
+                        <div class="rich-editor" id="note-content-editor">
+                            <div class="editor-toolbar">
+                                <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                <span class="toolbar-divider"></span>
+                                <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                                <span class="toolbar-divider"></span>
+                                <button type="button" onclick="formatText('formatBlock', 'h4')" title="Heading">H</button>
+                            </div>
+                            <div class="editor-content" id="note-content-input" contenteditable="true" data-placeholder="Write your notes here..."></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="note-tags-input">Tags (comma separated)</label>
@@ -1313,6 +1322,107 @@
         <div class="lightbox-caption">
             <h4 id="lightbox-title"></h4>
             <p id="lightbox-description"></p>
+        </div>
+    </div>
+
+    <!-- Character Modal -->
+    <div id="character-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="character-modal-title">Add Character</h3>
+                <button class="modal-close" onclick="closeModal('character-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="character-form">
+                    <input type="hidden" id="character-edit-id">
+
+                    <!-- PC/NPC Toggle -->
+                    <div class="form-group">
+                        <label>Character Type</label>
+                        <div class="type-toggle">
+                            <button type="button" class="toggle-btn active" data-type="pc" onclick="setCharacterType('pc')">
+                                <span class="toggle-icon">⚔️</span> Player Character (PC)
+                            </button>
+                            <button type="button" class="toggle-btn" data-type="npc" onclick="setCharacterType('npc')">
+                                <span class="toggle-icon">👤</span> Non-Player Character (NPC)
+                            </button>
+                        </div>
+                        <input type="hidden" id="character-type-input" value="pc">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="character-name-input">Character Name</label>
+                            <input type="text" id="character-name-input" required placeholder="e.g., Krak, Elara Moonshadow">
+                        </div>
+                        <div class="form-group">
+                            <label for="character-race-class-input">Race & Class</label>
+                            <input type="text" id="character-race-class-input" required placeholder="e.g., Human Barbarian, Elf Wizard">
+                        </div>
+                    </div>
+
+                    <div class="form-row" id="player-name-row">
+                        <div class="form-group">
+                            <label for="character-player-input">Player Name</label>
+                            <input type="text" id="character-player-input" placeholder="Who plays this character?">
+                        </div>
+                        <div class="form-group">
+                            <label for="character-level-input">Level</label>
+                            <input type="number" id="character-level-input" min="1" max="20" value="1">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="character-hp-current">Current HP</label>
+                            <input type="number" id="character-hp-current" min="0" value="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="character-hp-max">Max HP</label>
+                            <input type="number" id="character-hp-max" min="1" value="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="character-ac-input">AC</label>
+                            <input type="number" id="character-ac-input" min="1" value="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="character-init-input">Initiative</label>
+                            <input type="text" id="character-init-input" placeholder="+2" value="+0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="character-portrait-input">Portrait Image URL</label>
+                        <input type="url" id="character-portrait-input" placeholder="https://... (leave blank for default)">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Background & Notes</label>
+                        <div class="rich-editor" id="character-background-editor">
+                            <div class="editor-toolbar">
+                                <button type="button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                                <button type="button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                                <button type="button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                                <span class="toolbar-divider"></span>
+                                <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List">• List</button>
+                                <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List">1. List</button>
+                                <span class="toolbar-divider"></span>
+                                <button type="button" onclick="formatText('formatBlock', 'h4')" title="Heading">H</button>
+                                <button type="button" onclick="formatText('formatBlock', 'blockquote')" title="Quote">"</button>
+                            </div>
+                            <div class="editor-content" id="character-background-content" contenteditable="true" data-placeholder="Describe this character's background, personality, goals, and any important notes..."></div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-danger" id="delete-character-btn" onclick="deleteCharacter()" style="display: none;">Delete</button>
+                        <div class="form-actions-right">
+                            <button type="submit" class="btn btn-primary">Save Character</button>
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('character-modal')">Cancel</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
