@@ -57,12 +57,13 @@
                 <!-- Campaign Overview Card -->
                 <div class="card campaign-overview">
                     <div class="card-header">
-                        <h3>📍 Campaign Overview</h3>
+                        <h3 id="campaign-name-display">📍 Campaign Overview</h3>
                         <button class="btn btn-small" onclick="openCampaignEditModal()">Edit</button>
                     </div>
                     <div class="card-content">
-                        <div class="campaign-image">
-                            <div class="d20-placeholder">
+                        <div class="campaign-image" id="campaign-image-container">
+                            <img id="campaign-image" src="" alt="Campaign Image" style="display:none; width:100%; height:100%; object-fit:cover; border-radius: var(--border-radius);">
+                            <div class="d20-placeholder" id="campaign-d20-placeholder">
                                 <svg viewBox="0 0 100 100" class="d20-icon">
                                     <polygon points="50,5 95,30 95,70 50,95 5,70 5,30" fill="none" stroke="currentColor" stroke-width="2"/>
                                     <polygon points="50,5 95,30 50,50 5,30" fill="none" stroke="currentColor" stroke-width="1.5"/>
@@ -1283,6 +1284,7 @@
             <div class="modal-body">
                 <form id="note-form">
                     <input type="hidden" id="note-type-hidden">
+                    <input type="hidden" id="note-edit-id" value="">
                     <div class="form-group">
                         <label for="note-title-input">Title</label>
                         <input type="text" id="note-title-input" required>
@@ -1625,6 +1627,16 @@
             </div>
             <div class="modal-body">
                 <form id="campaign-form">
+                    <div class="form-group">
+                        <label for="campaign-name-input">Campaign Name</label>
+                        <input type="text" id="campaign-name-input" placeholder="e.g., Waterdeep: Dragon Heist">
+                    </div>
+                    <div class="form-group">
+                        <label for="campaign-image-input">Campaign Image</label>
+                        <input type="file" id="campaign-image-input" accept="image/*">
+                        <div id="campaign-image-preview" style="margin-top: 0.5rem;"></div>
+                        <button type="button" class="btn btn-small btn-secondary" id="campaign-image-remove-btn" style="display:none; margin-top: 0.5rem;" onclick="removeCampaignImage()">Remove Image</button>
+                    </div>
                     <div class="form-group">
                         <label for="campaign-chapter-input">Current Chapter</label>
                         <input type="text" id="campaign-chapter-input" placeholder="e.g., Chapter 1: Along the High Road">
