@@ -2811,6 +2811,34 @@ a:hover {
 }
 
 /* ===================================
+   Sync Status Indicator
+   =================================== */
+
+.sync-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    margin-left: var(--spacing-md);
+}
+
+.sync-icon {
+    font-size: 0.6rem;
+    color: #95a5a6;
+    transition: color 0.3s ease;
+}
+
+.sync-text {
+    color: var(--parchment-dark);
+    font-family: 'Courier New', monospace;
+}
+
+/* ===================================
    Data Management Section
    =================================== */
 

@@ -41,6 +41,10 @@
                     <span class="nav-icon">🎨</span> Gallery
                 </button>
             </nav>
+            <div class="sync-status" id="sync-status" title="Firebase sync status">
+                <span class="sync-icon" id="sync-icon">&#9679;</span>
+                <span class="sync-text" id="sync-text">Connecting...</span>
+            </div>
         </div>
     </header>
 
@@ -1690,6 +1694,10 @@
             </div>
         </div>
     </div>
+
+    <!-- Firebase SDK (compat for no-bundler usage) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script src="app.js"></script>
 </body>

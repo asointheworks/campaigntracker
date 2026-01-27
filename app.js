@@ -10,6 +10,140 @@
 const D20_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231a1a2e' width='100' height='100'/%3E%3Cpolygon points='50,10 85,30 85,70 50,90 15,70 15,30' fill='none' stroke='%23d4af37' stroke-width='2'/%3E%3Cpolygon points='50,10 85,30 50,50 15,30' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='85,30 85,70 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='85,70 50,90 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='50,90 15,70 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='15,70 15,30 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Ctext x='50' y='58' text-anchor='middle' font-size='20' font-weight='bold' fill='%23d4af37' font-family='serif'%3E20%3C/text%3E%3C/svg%3E";
 
 // ===================================
+// Firebase Configuration & Initialization
+// ===================================
+
+let db = null;
+let firebaseReady = false;
+let _firestoreUpdateInProgress = false; // prevents save loops
+
+try {
+    const firebaseConfig = {
+        apiKey: "AIzaSyB1UFGq5u4p_w8bsiudQykvgxZz4VHNw2w",
+        authDomain: "campaign-tracker-66a70.firebaseapp.com",
+        projectId: "campaign-tracker-66a70",
+        storageBucket: "campaign-tracker-66a70.firebasestorage.app",
+        messagingSenderId: "74145492926",
+        appId: "1:74145492926:web:bf755ee94e07d1da0a13ef"
+    };
+
+    if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        firebaseReady = true;
+        console.log('Firebase initialized successfully');
+    } else {
+        console.warn('Firebase SDK not loaded - running in offline mode');
+    }
+} catch (e) {
+    console.error('Firebase init error:', e);
+}
+
+function setSyncStatus(status) {
+    const icon = document.getElementById('sync-icon');
+    const text = document.getElementById('sync-text');
+    if (!icon || !text) return;
+
+    switch (status) {
+        case 'connected':
+            icon.style.color = '#2ecc71';
+            text.textContent = 'Synced';
+            break;
+        case 'syncing':
+            icon.style.color = '#f39c12';
+            text.textContent = 'Syncing...';
+            break;
+        case 'offline':
+            icon.style.color = '#e74c3c';
+            text.textContent = 'Offline';
+            break;
+        case 'error':
+            icon.style.color = '#e74c3c';
+            text.textContent = 'Sync Error';
+            break;
+        default:
+            icon.style.color = '#95a5a6';
+            text.textContent = 'Connecting...';
+    }
+}
+
+// Push local data to Firestore
+async function syncToFirestore(data) {
+    if (!firebaseReady || !db) return;
+    setSyncStatus('syncing');
+    try {
+        await db.collection('campaigns').doc('main').set(data);
+        setSyncStatus('connected');
+    } catch (e) {
+        console.error('Firestore write error:', e);
+        setSyncStatus('error');
+    }
+}
+
+// Start real-time listener from Firestore
+function startFirestoreListener() {
+    if (!firebaseReady || !db) {
+        setSyncStatus('offline');
+        return;
+    }
+
+    db.collection('campaigns').doc('main').onSnapshot(
+        (doc) => {
+            if (!doc.exists) {
+                // First time: push local data to Firestore
+                const local = CampaignData.get();
+                syncToFirestore(local);
+                return;
+            }
+
+            const remoteData = doc.data();
+            const localData = CampaignData.get();
+
+            // Only update if the remote data is actually different
+            // Use a simple timestamp comparison to avoid infinite loops
+            if (_firestoreUpdateInProgress) return;
+
+            // Check if remote has newer activity (simple heuristic)
+            const remoteLatest = (remoteData.activity && remoteData.activity[0]) ? remoteData.activity[0].id : 0;
+            const localLatest = (localData.activity && localData.activity[0]) ? localData.activity[0].id : 0;
+
+            if (remoteLatest !== localLatest || JSON.stringify(remoteData.campaign) !== JSON.stringify(localData.campaign)) {
+                // Remote is different - update local
+                _firestoreUpdateInProgress = true;
+                localStorage.setItem('campaignTrackerData', JSON.stringify(remoteData));
+
+                // Re-render everything
+                try {
+                    renderCharacters();
+                    renderTales();
+                    renderResources();
+                    renderNotes();
+                    renderDMNotes();
+                    renderSessionSummaries();
+                    renderNPCs();
+                    renderLocations();
+                    renderQuests();
+                    renderGallery();
+                    renderUploadedFiles();
+                    renderStories();
+                    updateDashboardStats();
+                    CampaignData.renderActivity();
+                } catch (e) {
+                    console.warn('Re-render error during sync:', e);
+                }
+                _firestoreUpdateInProgress = false;
+            }
+
+            setSyncStatus('connected');
+        },
+        (error) => {
+            console.error('Firestore listener error:', error);
+            setSyncStatus('error');
+        }
+    );
+}
+
+// ===================================
 // IndexedDB File Storage
 // ===================================
 
@@ -211,10 +345,14 @@ const CampaignData = {
         return this.defaults;
     },
 
-    // Save data to localStorage
+    // Save data to localStorage + Firestore
     save(data) {
         try {
             localStorage.setItem('campaignTrackerData', JSON.stringify(data));
+            // Sync to Firestore if not currently receiving a Firestore update
+            if (!_firestoreUpdateInProgress) {
+                syncToFirestore(data);
+            }
             return true;
         } catch (e) {
             console.error('Error saving data:', e);
@@ -2564,6 +2702,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Migrate old file data and update storage info
     migrateFilesToIndexedDB().then(() => updateStorageInfo());
+
+    // Start Firebase real-time sync
+    startFirestoreListener();
 
     console.log('🐉 Waterdeep: Dragon Heist Campaign Tracker initialized!');
 });
