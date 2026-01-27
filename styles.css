@@ -506,6 +506,33 @@ a:hover {
     background: linear-gradient(180deg, rgba(22, 33, 62, 0.8) 0%, rgba(26, 26, 46, 0.9) 100%);
 }
 
+/* Portrait upload tabs */
+.portrait-input-options { display: flex; flex-direction: column; gap: 0.5rem; }
+.portrait-tabs { display: flex; gap: 0; }
+.portrait-tab {
+    flex: 1; padding: 0.4rem 0.75rem; border: 1px solid var(--border-color);
+    background: transparent; color: var(--text-secondary); cursor: pointer;
+    font-size: 0.85rem; transition: all 0.2s;
+}
+.portrait-tab:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.portrait-tab:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.portrait-tab.active { background: var(--accent-gold); color: var(--primary-dark); border-color: var(--accent-gold); }
+.portrait-tab-content { display: none; }
+.portrait-tab-content.active { display: block; }
+.portrait-upload-zone {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.5rem; padding: 1.5rem; border: 2px dashed var(--border-color);
+    border-radius: var(--radius-sm); cursor: pointer; text-align: center;
+    color: var(--text-secondary); font-size: 0.85rem; transition: border-color 0.2s;
+}
+.portrait-upload-zone:hover, .portrait-upload-zone.dragover { border-color: var(--accent-gold); }
+.portrait-upload-icon { font-size: 1.5rem; }
+.portrait-preview {
+    display: flex; align-items: center; gap: 1rem; padding: 0.5rem;
+    background: rgba(0,0,0,0.2); border-radius: var(--radius-sm);
+}
+.portrait-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: var(--radius-sm); }
+
 .level-badge {
     position: absolute;
     top: var(--spacing-md);

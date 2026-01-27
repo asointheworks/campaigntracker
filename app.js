@@ -1377,7 +1377,15 @@ function openCharacterModal(characterId = null) {
             document.getElementById('character-hp-max').value = character.maxHp || 10;
             document.getElementById('character-ac-input').value = character.ac || 10;
             document.getElementById('character-init-input').value = character.initiative || '+0';
-            document.getElementById('character-portrait-input').value = character.portrait || '';
+            resetPortraitState();
+            if (character.portrait && character.portrait.startsWith('data:')) {
+                _portraitDataUrl = character.portrait;
+                document.getElementById('portrait-preview-img').src = character.portrait;
+                document.getElementById('portrait-preview').style.display = 'flex';
+                document.getElementById('character-portrait-input').value = '';
+            } else {
+                document.getElementById('character-portrait-input').value = character.portrait || '';
+            }
             backgroundEditor.innerHTML = character.background || '';
 
             // Set type toggle
@@ -1387,9 +1395,11 @@ function openCharacterModal(characterId = null) {
         // New character
         title.textContent = 'Add Character';
         deleteBtn.style.display = 'none';
+        resetPortraitState();
     }
 
     openModal('character-modal');
+    initPortraitUpload();
 }
 
 function setCharacterType(type) {
@@ -1406,6 +1416,73 @@ function setCharacterType(type) {
     } else {
         playerRow.querySelector('label[for="character-player-input"]').textContent = 'Player Name';
     }
+}
+
+// Portrait upload handling
+let _portraitDataUrl = null;
+
+function switchPortraitTab(tab) {
+    document.querySelectorAll('.portrait-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.portrait-tab-content').forEach(t => t.classList.remove('active'));
+    if (tab === 'url') {
+        document.querySelector('.portrait-tab:first-child').classList.add('active');
+        document.getElementById('portrait-url-tab').classList.add('active');
+    } else {
+        document.querySelector('.portrait-tab:last-child').classList.add('active');
+        document.getElementById('portrait-upload-tab').classList.add('active');
+    }
+}
+
+function handlePortraitFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        _portraitDataUrl = e.target.result;
+        document.getElementById('character-portrait-input').value = '';
+        const preview = document.getElementById('portrait-preview');
+        document.getElementById('portrait-preview-img').src = _portraitDataUrl;
+        preview.style.display = 'flex';
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearPortraitUpload() {
+    _portraitDataUrl = null;
+    document.getElementById('portrait-preview').style.display = 'none';
+    document.getElementById('portrait-preview-img').src = '';
+    document.getElementById('portrait-file-input').value = '';
+}
+
+function initPortraitUpload() {
+    const zone = document.getElementById('portrait-upload-zone');
+    const fileInput = document.getElementById('portrait-file-input');
+    if (!zone || !fileInput) return;
+
+    zone.addEventListener('click', () => fileInput.click());
+    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handlePortraitFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) handlePortraitFile(e.target.files[0]);
+    });
+}
+
+function getPortraitValue() {
+    if (_portraitDataUrl) return _portraitDataUrl;
+    return document.getElementById('character-portrait-input').value || '';
+}
+
+function resetPortraitState() {
+    _portraitDataUrl = null;
+    const preview = document.getElementById('portrait-preview');
+    if (preview) preview.style.display = 'none';
+    const fileInput = document.getElementById('portrait-file-input');
+    if (fileInput) fileInput.value = '';
+    switchPortraitTab('url');
 }
 
 function initCharacterForm() {
@@ -1425,7 +1502,7 @@ function initCharacterForm() {
             maxHp: parseInt(document.getElementById('character-hp-max').value) || 10,
             ac: parseInt(document.getElementById('character-ac-input').value) || 10,
             initiative: document.getElementById('character-init-input').value || '+0',
-            portrait: document.getElementById('character-portrait-input').value || getDefaultPortrait(document.getElementById('character-type-input').value),
+            portrait: getPortraitValue() || getDefaultPortrait(document.getElementById('character-type-input').value),
             background: backgroundEditor.innerHTML,
             createdAt: currentEditingCharacterId ? undefined : new Date().toISOString()
         };
@@ -2735,6 +2812,8 @@ window.cancelEditRules = cancelEditRules;
 window.saveSessionInfo = saveSessionInfo;
 window.openCharacterModal = openCharacterModal;
 window.setCharacterType = setCharacterType;
+window.switchPortraitTab = switchPortraitTab;
+window.clearPortraitUpload = clearPortraitUpload;
 window.deleteCharacter = deleteCharacter;
 window.formatText = formatText;
 window.openCampaignEditModal = openCampaignEditModal;

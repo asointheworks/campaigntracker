@@ -1618,8 +1618,27 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="character-portrait-input">Portrait Image URL</label>
-                        <input type="url" id="character-portrait-input" placeholder="https://... (leave blank for default)">
+                        <label>Portrait Image</label>
+                        <div class="portrait-input-options">
+                            <div class="portrait-tabs">
+                                <button type="button" class="portrait-tab active" onclick="switchPortraitTab('url')">URL</button>
+                                <button type="button" class="portrait-tab" onclick="switchPortraitTab('upload')">Upload</button>
+                            </div>
+                            <div class="portrait-tab-content active" id="portrait-url-tab">
+                                <input type="url" id="character-portrait-input" placeholder="https://... (leave blank for default)">
+                            </div>
+                            <div class="portrait-tab-content" id="portrait-upload-tab">
+                                <div class="portrait-upload-zone" id="portrait-upload-zone">
+                                    <span class="portrait-upload-icon">📷</span>
+                                    <span>Click or drag image here</span>
+                                    <input type="file" id="portrait-file-input" accept="image/*" hidden>
+                                </div>
+                            </div>
+                            <div class="portrait-preview" id="portrait-preview" style="display:none;">
+                                <img id="portrait-preview-img" src="" alt="Preview">
+                                <button type="button" class="btn btn-small btn-danger" onclick="clearPortraitUpload()">Remove</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
