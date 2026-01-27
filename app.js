@@ -10,6 +10,80 @@
 const D20_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231a1a2e' width='100' height='100'/%3E%3Cpolygon points='50,10 85,30 85,70 50,90 15,70 15,30' fill='none' stroke='%23d4af37' stroke-width='2'/%3E%3Cpolygon points='50,10 85,30 50,50 15,30' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='85,30 85,70 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='85,70 50,90 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='50,90 15,70 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='15,70 15,30 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Ctext x='50' y='58' text-anchor='middle' font-size='20' font-weight='bold' fill='%23d4af37' font-family='serif'%3E20%3C/text%3E%3C/svg%3E";
 
 // ===================================
+// IndexedDB File Storage
+// ===================================
+
+const FileStore = {
+    DB_NAME: 'campaignTrackerFiles',
+    DB_VERSION: 1,
+    STORE_NAME: 'files',
+
+    async open() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.DB_NAME, this.DB_VERSION);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(this.STORE_NAME)) {
+                    db.createObjectStore(this.STORE_NAME, { keyPath: 'id' });
+                }
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    },
+
+    async saveFile(fileData) {
+        const db = await this.open();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(this.STORE_NAME, 'readwrite');
+            tx.objectStore(this.STORE_NAME).put(fileData);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    },
+
+    async getFile(id) {
+        const db = await this.open();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(this.STORE_NAME, 'readonly');
+            const request = tx.objectStore(this.STORE_NAME).get(id);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    },
+
+    async getAllFiles() {
+        const db = await this.open();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(this.STORE_NAME, 'readonly');
+            const request = tx.objectStore(this.STORE_NAME).getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    },
+
+    async deleteFile(id) {
+        const db = await this.open();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(this.STORE_NAME, 'readwrite');
+            tx.objectStore(this.STORE_NAME).delete(id);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    },
+
+    async getCount() {
+        const db = await this.open();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(this.STORE_NAME, 'readonly');
+            const request = tx.objectStore(this.STORE_NAME).count();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+};
+
+// ===================================
 // Data Management
 // ===================================
 
@@ -953,31 +1027,44 @@ function initFileUpload() {
 }
 
 function handleFiles(files) {
-    const data = CampaignData.get();
-
     Array.from(files).forEach(file => {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             const fileData = {
-                id: Date.now(),
+                id: Date.now() + Math.floor(Math.random() * 1000),
                 name: file.name,
                 size: formatFileSize(file.size),
+                rawSize: file.size,
                 type: file.type,
                 data: e.target.result,
                 uploadedAt: new Date().toISOString()
             };
 
-            data.files.push(fileData);
-            CampaignData.save(data);
-            renderUploadedFiles();
-            CampaignData.addActivity('📁', `File uploaded: "${file.name}"`);
-        };
+            // Store file data in IndexedDB (handles larger files)
+            try {
+                await FileStore.saveFile(fileData);
 
-        if (file.type.startsWith('image/')) {
-            reader.readAsDataURL(file);
-        } else {
-            reader.readAsDataURL(file);
-        }
+                // Store only metadata (no data blob) in localStorage for listing
+                const data = CampaignData.get();
+                data.files.push({
+                    id: fileData.id,
+                    name: fileData.name,
+                    size: fileData.size,
+                    rawSize: fileData.rawSize,
+                    type: fileData.type,
+                    uploadedAt: fileData.uploadedAt
+                });
+                CampaignData.save(data);
+
+                renderUploadedFiles();
+                CampaignData.addActivity('📁', `File uploaded: "${file.name}"`);
+                updateStorageInfo();
+            } catch (err) {
+                console.error('Error saving file to IndexedDB:', err);
+                alert(`Failed to save "${file.name}". The file may be too large.`);
+            }
+        };
+        reader.readAsDataURL(file);
     });
 }
 
@@ -1002,6 +1089,7 @@ function renderUploadedFiles() {
                     <span class="file-name">${file.name}</span>
                     <span class="file-size">${file.size}</span>
                 </div>
+                <button class="btn btn-small" onclick="downloadFile(${file.id})" title="Download">⬇</button>
                 <button class="file-remove" onclick="removeFile(${file.id})">×</button>
             </div>
         `;
@@ -1015,11 +1103,32 @@ function getFileIcon(type) {
     return '📎';
 }
 
-function removeFile(fileId) {
+async function removeFile(fileId) {
     const data = CampaignData.get();
     data.files = data.files.filter(f => f.id !== fileId);
     CampaignData.save(data);
+    try { await FileStore.deleteFile(fileId); } catch (e) { /* ignore */ }
     renderUploadedFiles();
+    updateStorageInfo();
+}
+
+async function downloadFile(fileId) {
+    try {
+        const file = await FileStore.getFile(fileId);
+        if (!file || !file.data) {
+            alert('File data not found. It may have been stored in an older format.');
+            return;
+        }
+        const link = document.createElement('a');
+        link.href = file.data;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (e) {
+        console.error('Error downloading file:', e);
+        alert('Could not download file.');
+    }
 }
 
 // ===================================
@@ -2231,6 +2340,301 @@ function initCampaignForm() {
 }
 
 // ===================================
+// Export / Import / Data Management
+// ===================================
+
+async function exportAllData() {
+    try {
+        const data = CampaignData.get();
+        const files = await FileStore.getAllFiles();
+
+        const exportBundle = {
+            version: 1,
+            exportType: 'full',
+            exportedAt: new Date().toISOString(),
+            campaignData: data,
+            fileBlobs: files
+        };
+
+        downloadJSON(exportBundle, `campaign-full-backup-${formatDateForFile()}.json`);
+        CampaignData.addActivity('💾', 'Full campaign data exported');
+    } catch (e) {
+        console.error('Export error:', e);
+        alert('Failed to export data. See console for details.');
+    }
+}
+
+async function exportPlayerData() {
+    try {
+        const data = CampaignData.get();
+        const files = await FileStore.getAllFiles();
+
+        // Player-relevant data only (no DM notes)
+        const exportBundle = {
+            version: 1,
+            exportType: 'player',
+            exportedAt: new Date().toISOString(),
+            campaignData: {
+                tales: data.tales || [],
+                evidence: data.evidence || [],
+                files: data.files || [],
+                stories: data.stories || []
+            },
+            fileBlobs: files
+        };
+
+        downloadJSON(exportBundle, `player-data-${formatDateForFile()}.json`);
+        CampaignData.addActivity('💾', 'Player data exported');
+    } catch (e) {
+        console.error('Export error:', e);
+        alert('Failed to export data. See console for details.');
+    }
+}
+
+function downloadJSON(obj, filename) {
+    const blob = new Blob([JSON.stringify(obj)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+function formatDateForFile() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function initImportZone() {
+    const importZone = document.getElementById('import-zone');
+    const importInput = document.getElementById('import-file-input');
+    if (!importZone || !importInput) return;
+
+    importZone.addEventListener('click', () => importInput.click());
+    importZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        importZone.classList.add('dragover');
+    });
+    importZone.addEventListener('dragleave', () => {
+        importZone.classList.remove('dragover');
+    });
+    importZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        importZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handleImportFile(e.dataTransfer.files[0]);
+    });
+    importInput.addEventListener('change', () => {
+        if (importInput.files.length) handleImportFile(importInput.files[0]);
+    });
+}
+
+function handleImportFile(file) {
+    if (!file.name.endsWith('.json')) {
+        alert('Please select a .json export file.');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const bundle = JSON.parse(e.target.result);
+            if (!bundle.version || !bundle.campaignData) {
+                alert('This does not appear to be a valid campaign export file.');
+                return;
+            }
+            showImportPreview(bundle);
+        } catch (err) {
+            alert('Failed to read import file: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function showImportPreview(bundle) {
+    const preview = document.getElementById('import-preview');
+    if (!preview) return;
+
+    const cd = bundle.campaignData;
+    const talesCount = (cd.tales || []).length;
+    const storiesCount = (cd.stories || []).length;
+    const filesCount = (cd.files || []).length;
+    const blobsCount = (bundle.fileBlobs || []).length;
+    const hasFullData = bundle.exportType === 'full';
+
+    preview.classList.remove('hidden');
+    preview.innerHTML = `
+        <div class="import-summary">
+            <h4>Import Preview</h4>
+            <p><strong>Type:</strong> ${hasFullData ? 'Full Backup' : 'Player Data'}</p>
+            <p><strong>Exported:</strong> ${new Date(bundle.exportedAt).toLocaleString()}</p>
+            <ul>
+                ${talesCount ? `<li>${talesCount} PC Tales entries</li>` : ''}
+                ${storiesCount ? `<li>${storiesCount} stories</li>` : ''}
+                ${filesCount ? `<li>${filesCount} file references</li>` : ''}
+                ${blobsCount ? `<li>${blobsCount} file blobs to restore</li>` : ''}
+                ${hasFullData && cd.characters ? `<li>${cd.characters.length} characters</li>` : ''}
+                ${hasFullData && cd.quests ? `<li>${cd.quests.length} quests</li>` : ''}
+                ${hasFullData && cd.npcs ? `<li>${(cd.npcs || []).length} NPCs</li>` : ''}
+                ${hasFullData && cd.locations ? `<li>${(cd.locations || []).length} locations</li>` : ''}
+            </ul>
+            <p class="import-warning">Importing will <strong>merge</strong> this data with your existing data. Duplicates are skipped by ID.</p>
+            <div class="import-actions">
+                <button class="btn btn-primary" onclick="confirmImport()">Import Data</button>
+                <button class="btn btn-secondary" onclick="cancelImport()">Cancel</button>
+            </div>
+        </div>
+    `;
+
+    // Stash the bundle for confirmation
+    window._pendingImport = bundle;
+}
+
+async function confirmImport() {
+    const bundle = window._pendingImport;
+    if (!bundle) return;
+
+    try {
+        const current = CampaignData.get();
+        const imported = bundle.campaignData;
+
+        // Merge arrays by ID (skip duplicates)
+        const arrayKeys = ['tales', 'evidence', 'stories', 'files', 'characters', 'npcs', 'locations', 'quests',
+                          'icNotes', 'oocNotes', 'dmNotes', 'sessionSummaries', 'gallery', 'activity'];
+
+        for (const key of arrayKeys) {
+            if (Array.isArray(imported[key]) && imported[key].length > 0) {
+                if (!Array.isArray(current[key])) current[key] = [];
+                const existingIds = new Set(current[key].map(item => item.id));
+                for (const item of imported[key]) {
+                    if (!existingIds.has(item.id)) {
+                        current[key].push(item);
+                    }
+                }
+            }
+        }
+
+        // Merge objects (resources, campaign, rules) - only for full backups
+        if (bundle.exportType === 'full') {
+            if (imported.resources) {
+                current.resources = { ...current.resources, ...imported.resources };
+            }
+            if (imported.rules) {
+                current.rules = { ...current.rules, ...imported.rules };
+            }
+            // Don't overwrite campaign settings - those are DM-controlled
+        }
+
+        CampaignData.save(current);
+
+        // Import file blobs into IndexedDB
+        if (Array.isArray(bundle.fileBlobs)) {
+            for (const fileBlob of bundle.fileBlobs) {
+                try {
+                    await FileStore.saveFile(fileBlob);
+                } catch (e) {
+                    console.warn('Could not import file blob:', fileBlob.name, e);
+                }
+            }
+        }
+
+        // Re-render everything
+        renderCharacters();
+        renderTales();
+        renderResources();
+        renderNotes();
+        renderDMNotes();
+        renderSessionSummaries();
+        renderNPCs();
+        renderLocations();
+        renderQuests();
+        renderGallery();
+        renderUploadedFiles();
+        renderStories();
+        updateDashboardStats();
+        CampaignData.renderActivity();
+        updateStorageInfo();
+
+        CampaignData.addActivity('📥', `Data imported (${bundle.exportType} bundle)`);
+        alert('Import successful! Data has been merged.');
+        cancelImport();
+    } catch (e) {
+        console.error('Import error:', e);
+        alert('Import failed: ' + e.message);
+    }
+}
+
+function cancelImport() {
+    const preview = document.getElementById('import-preview');
+    if (preview) {
+        preview.classList.add('hidden');
+        preview.innerHTML = '';
+    }
+    window._pendingImport = null;
+    const importInput = document.getElementById('import-file-input');
+    if (importInput) importInput.value = '';
+}
+
+async function updateStorageInfo() {
+    const infoEl = document.getElementById('storage-info');
+    if (!infoEl) return;
+
+    // localStorage size
+    let lsSize = 0;
+    try {
+        const lsData = localStorage.getItem('campaignTrackerData');
+        if (lsData) lsSize = new Blob([lsData]).size;
+    } catch (e) { /* ignore */ }
+
+    // IndexedDB file count
+    let fileCount = 0;
+    try {
+        fileCount = await FileStore.getCount();
+    } catch (e) { /* ignore */ }
+
+    infoEl.innerHTML = `
+        <span class="storage-badge">localStorage: ${formatFileSize(lsSize)}</span>
+        <span class="storage-badge">IndexedDB files: ${fileCount}</span>
+    `;
+}
+
+// Migrate old localStorage file data to IndexedDB on first load
+async function migrateFilesToIndexedDB() {
+    const data = CampaignData.get();
+    if (!data.files || data.files.length === 0) return;
+
+    let migrated = false;
+    for (const file of data.files) {
+        if (file.data) {
+            // This file has inline data - migrate to IndexedDB
+            try {
+                await FileStore.saveFile({
+                    id: file.id,
+                    name: file.name,
+                    size: file.size,
+                    rawSize: file.rawSize || 0,
+                    type: file.type,
+                    data: file.data,
+                    uploadedAt: file.uploadedAt
+                });
+                // Remove inline data from localStorage entry
+                delete file.data;
+                migrated = true;
+            } catch (e) {
+                console.warn('Could not migrate file:', file.name, e);
+            }
+        }
+    }
+
+    if (migrated) {
+        CampaignData.save(data);
+        console.log('Migrated file data from localStorage to IndexedDB');
+    }
+}
+
+// ===================================
 // Initialize Application
 // ===================================
 
@@ -2275,12 +2679,18 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPCsForInitiative();
     renderInitiativeList();
 
+    // Initialize import zone
+    initImportZone();
+
     // Load session info
     loadSessionInfo();
 
     // Update dashboard
     updateDashboardStats();
     CampaignData.renderActivity();
+
+    // Migrate old file data and update storage info
+    migrateFilesToIndexedDB().then(() => updateStorageInfo());
 
     console.log('🐉 Waterdeep: Dragon Heist Campaign Tracker initialized!');
 });
@@ -2339,3 +2749,10 @@ window.removeCombatant = removeCombatant;
 window.sortByInitiative = sortByInitiative;
 window.nextTurn = nextTurn;
 window.clearEncounter = clearEncounter;
+
+// Data Management exports
+window.exportAllData = exportAllData;
+window.exportPlayerData = exportPlayerData;
+window.confirmImport = confirmImport;
+window.cancelImport = cancelImport;
+window.downloadFile = downloadFile;
