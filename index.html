@@ -201,6 +201,38 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Data Management Card -->
+            <div class="card data-management full-width">
+                <div class="card-header">
+                    <h3>💾 Data Management</h3>
+                </div>
+                <div class="card-content">
+                    <p class="data-mgmt-description">Export your campaign data to share with other players or back it up. Import data bundles from players to merge their submissions into the tracker.</p>
+                    <div class="data-mgmt-info" id="storage-info">
+                        <span class="storage-badge">localStorage: calculating...</span>
+                        <span class="storage-badge">IndexedDB files: calculating...</span>
+                    </div>
+                    <div class="data-mgmt-actions">
+                        <div class="export-group">
+                            <h4>Export</h4>
+                            <p class="data-mgmt-hint">Download all campaign data as a file you can share or back up.</p>
+                            <button class="btn btn-primary" onclick="exportAllData()">Export All Data</button>
+                            <button class="btn btn-secondary" onclick="exportPlayerData()">Export Player Data Only</button>
+                        </div>
+                        <div class="import-group">
+                            <h4>Import</h4>
+                            <p class="data-mgmt-hint">Import a data bundle from a player or a previous backup. Existing data will be merged (not overwritten).</p>
+                            <div class="import-zone" id="import-zone">
+                                <div class="upload-icon">📥</div>
+                                <p>Drag & drop a .json export file here or click to browse</p>
+                                <input type="file" id="import-file-input" accept=".json" hidden>
+                            </div>
+                            <div id="import-preview" class="import-preview hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Party Section -->
