@@ -10,6 +10,140 @@
 const D20_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231a1a2e' width='100' height='100'/%3E%3Cpolygon points='50,10 85,30 85,70 50,90 15,70 15,30' fill='none' stroke='%23d4af37' stroke-width='2'/%3E%3Cpolygon points='50,10 85,30 50,50 15,30' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='85,30 85,70 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='85,70 50,90 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='50,90 15,70 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Cpolygon points='15,70 15,30 50,50' fill='none' stroke='%23d4af37' stroke-width='1.5'/%3E%3Ctext x='50' y='58' text-anchor='middle' font-size='20' font-weight='bold' fill='%23d4af37' font-family='serif'%3E20%3C/text%3E%3C/svg%3E";
 
 // ===================================
+// Firebase Configuration & Initialization
+// ===================================
+
+let db = null;
+let firebaseReady = false;
+let _firestoreUpdateInProgress = false; // prevents save loops
+
+try {
+    const firebaseConfig = {
+        apiKey: "AIzaSyB1UFGq5u4p_w8bsiudQykvgxZz4VHNw2w",
+        authDomain: "campaign-tracker-66a70.firebaseapp.com",
+        projectId: "campaign-tracker-66a70",
+        storageBucket: "campaign-tracker-66a70.firebasestorage.app",
+        messagingSenderId: "74145492926",
+        appId: "1:74145492926:web:bf755ee94e07d1da0a13ef"
+    };
+
+    if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        firebaseReady = true;
+        console.log('Firebase initialized successfully');
+    } else {
+        console.warn('Firebase SDK not loaded - running in offline mode');
+    }
+} catch (e) {
+    console.error('Firebase init error:', e);
+}
+
+function setSyncStatus(status) {
+    const icon = document.getElementById('sync-icon');
+    const text = document.getElementById('sync-text');
+    if (!icon || !text) return;
+
+    switch (status) {
+        case 'connected':
+            icon.style.color = '#2ecc71';
+            text.textContent = 'Synced';
+            break;
+        case 'syncing':
+            icon.style.color = '#f39c12';
+            text.textContent = 'Syncing...';
+            break;
+        case 'offline':
+            icon.style.color = '#e74c3c';
+            text.textContent = 'Offline';
+            break;
+        case 'error':
+            icon.style.color = '#e74c3c';
+            text.textContent = 'Sync Error';
+            break;
+        default:
+            icon.style.color = '#95a5a6';
+            text.textContent = 'Connecting...';
+    }
+}
+
+// Push local data to Firestore
+async function syncToFirestore(data) {
+    if (!firebaseReady || !db) return;
+    setSyncStatus('syncing');
+    try {
+        await db.collection('campaigns').doc('main').set(data);
+        setSyncStatus('connected');
+    } catch (e) {
+        console.error('Firestore write error:', e);
+        setSyncStatus('error');
+    }
+}
+
+// Start real-time listener from Firestore
+function startFirestoreListener() {
+    if (!firebaseReady || !db) {
+        setSyncStatus('offline');
+        return;
+    }
+
+    db.collection('campaigns').doc('main').onSnapshot(
+        (doc) => {
+            if (!doc.exists) {
+                // First time: push local data to Firestore
+                const local = CampaignData.get();
+                syncToFirestore(local);
+                return;
+            }
+
+            const remoteData = doc.data();
+            const localData = CampaignData.get();
+
+            // Only update if the remote data is actually different
+            // Use a simple timestamp comparison to avoid infinite loops
+            if (_firestoreUpdateInProgress) return;
+
+            // Check if remote has newer activity (simple heuristic)
+            const remoteLatest = (remoteData.activity && remoteData.activity[0]) ? remoteData.activity[0].id : 0;
+            const localLatest = (localData.activity && localData.activity[0]) ? localData.activity[0].id : 0;
+
+            if (remoteLatest !== localLatest || JSON.stringify(remoteData.campaign) !== JSON.stringify(localData.campaign)) {
+                // Remote is different - update local
+                _firestoreUpdateInProgress = true;
+                localStorage.setItem('campaignTrackerData', JSON.stringify(remoteData));
+
+                // Re-render everything
+                try {
+                    renderCharacters();
+                    renderTales();
+                    renderResources();
+                    renderNotes();
+                    renderDMNotes();
+                    renderSessionSummaries();
+                    renderNPCs();
+                    renderLocations();
+                    renderQuests();
+                    renderGallery();
+                    renderUploadedFiles();
+                    renderStories();
+                    updateDashboardStats();
+                    CampaignData.renderActivity();
+                } catch (e) {
+                    console.warn('Re-render error during sync:', e);
+                }
+                _firestoreUpdateInProgress = false;
+            }
+
+            setSyncStatus('connected');
+        },
+        (error) => {
+            console.error('Firestore listener error:', error);
+            setSyncStatus('error');
+        }
+    );
+}
+
+// ===================================
 // IndexedDB File Storage
 // ===================================
 
@@ -224,10 +358,14 @@ const CampaignData = {
         return JSON.parse(JSON.stringify(this.defaults));
     },
 
-    // Save data to localStorage
+    // Save data to localStorage + Firestore
     save(data) {
         try {
             localStorage.setItem('campaignTrackerData', JSON.stringify(data));
+            // Sync to Firestore if not currently receiving a Firestore update
+            if (!_firestoreUpdateInProgress) {
+                syncToFirestore(data);
+            }
             return true;
         } catch (e) {
             console.error('Error saving data:', e);
@@ -1292,7 +1430,15 @@ function openCharacterModal(characterId = null) {
             document.getElementById('character-hp-max').value = character.maxHp || 10;
             document.getElementById('character-ac-input').value = character.ac || 10;
             document.getElementById('character-init-input').value = character.initiative || '+0';
-            document.getElementById('character-portrait-input').value = character.portrait || '';
+            resetPortraitState();
+            if (character.portrait && character.portrait.startsWith('data:')) {
+                _portraitDataUrl = character.portrait;
+                document.getElementById('portrait-preview-img').src = character.portrait;
+                document.getElementById('portrait-preview').style.display = 'flex';
+                document.getElementById('character-portrait-input').value = '';
+            } else {
+                document.getElementById('character-portrait-input').value = character.portrait || '';
+            }
             backgroundEditor.innerHTML = character.background || '';
 
             // Set type toggle
@@ -1302,9 +1448,11 @@ function openCharacterModal(characterId = null) {
         // New character
         title.textContent = 'Add Character';
         deleteBtn.style.display = 'none';
+        resetPortraitState();
     }
 
     openModal('character-modal');
+    initPortraitUpload();
 }
 
 function setCharacterType(type) {
@@ -1321,6 +1469,73 @@ function setCharacterType(type) {
     } else {
         playerRow.querySelector('label[for="character-player-input"]').textContent = 'Player Name';
     }
+}
+
+// Portrait upload handling
+let _portraitDataUrl = null;
+
+function switchPortraitTab(tab) {
+    document.querySelectorAll('.portrait-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.portrait-tab-content').forEach(t => t.classList.remove('active'));
+    if (tab === 'url') {
+        document.querySelector('.portrait-tab:first-child').classList.add('active');
+        document.getElementById('portrait-url-tab').classList.add('active');
+    } else {
+        document.querySelector('.portrait-tab:last-child').classList.add('active');
+        document.getElementById('portrait-upload-tab').classList.add('active');
+    }
+}
+
+function handlePortraitFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        _portraitDataUrl = e.target.result;
+        document.getElementById('character-portrait-input').value = '';
+        const preview = document.getElementById('portrait-preview');
+        document.getElementById('portrait-preview-img').src = _portraitDataUrl;
+        preview.style.display = 'flex';
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearPortraitUpload() {
+    _portraitDataUrl = null;
+    document.getElementById('portrait-preview').style.display = 'none';
+    document.getElementById('portrait-preview-img').src = '';
+    document.getElementById('portrait-file-input').value = '';
+}
+
+function initPortraitUpload() {
+    const zone = document.getElementById('portrait-upload-zone');
+    const fileInput = document.getElementById('portrait-file-input');
+    if (!zone || !fileInput) return;
+
+    zone.addEventListener('click', () => fileInput.click());
+    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handlePortraitFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) handlePortraitFile(e.target.files[0]);
+    });
+}
+
+function getPortraitValue() {
+    if (_portraitDataUrl) return _portraitDataUrl;
+    return document.getElementById('character-portrait-input').value || '';
+}
+
+function resetPortraitState() {
+    _portraitDataUrl = null;
+    const preview = document.getElementById('portrait-preview');
+    if (preview) preview.style.display = 'none';
+    const fileInput = document.getElementById('portrait-file-input');
+    if (fileInput) fileInput.value = '';
+    switchPortraitTab('url');
 }
 
 function initCharacterForm() {
@@ -1340,7 +1555,7 @@ function initCharacterForm() {
             maxHp: parseInt(document.getElementById('character-hp-max').value) || 10,
             ac: parseInt(document.getElementById('character-ac-input').value) || 10,
             initiative: document.getElementById('character-init-input').value || '+0',
-            portrait: document.getElementById('character-portrait-input').value || getDefaultPortrait(document.getElementById('character-type-input').value),
+            portrait: getPortraitValue() || getDefaultPortrait(document.getElementById('character-type-input').value),
             background: backgroundEditor.innerHTML,
             createdAt: currentEditingCharacterId ? undefined : new Date().toISOString()
         };
@@ -2692,6 +2907,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Migrate old file data and update storage info
     migrateFilesToIndexedDB().then(() => updateStorageInfo());
 
+    // Start Firebase real-time sync
+    startFirestoreListener();
+
     console.log('🐉 Waterdeep: Dragon Heist Campaign Tracker initialized!');
 });
 
@@ -2721,6 +2939,8 @@ window.cancelEditRules = cancelEditRules;
 window.saveSessionInfo = saveSessionInfo;
 window.openCharacterModal = openCharacterModal;
 window.setCharacterType = setCharacterType;
+window.switchPortraitTab = switchPortraitTab;
+window.clearPortraitUpload = clearPortraitUpload;
 window.deleteCharacter = deleteCharacter;
 window.formatText = formatText;
 window.openCampaignEditModal = openCampaignEditModal;
