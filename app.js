@@ -27,7 +27,8 @@ const CampaignData = {
             sessionsPlayed: 1,
             nextSessionDate: "",
             sessionNotes: "",
-            synopsis: ""
+            synopsis: "",
+            campaignImage: ""
         },
         characters: [
             {
@@ -128,13 +129,25 @@ const CampaignData = {
         const saved = localStorage.getItem('campaignTrackerData');
         if (saved) {
             try {
-                return JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                // Merge with defaults to ensure all keys exist
+                const merged = JSON.parse(JSON.stringify(this.defaults));
+                for (const key of Object.keys(merged)) {
+                    if (parsed[key] !== undefined) {
+                        if (typeof merged[key] === 'object' && !Array.isArray(merged[key]) && merged[key] !== null) {
+                            merged[key] = { ...merged[key], ...parsed[key] };
+                        } else {
+                            merged[key] = parsed[key];
+                        }
+                    }
+                }
+                return merged;
             } catch (e) {
                 console.error('Error loading saved data:', e);
-                return this.defaults;
+                return JSON.parse(JSON.stringify(this.defaults));
             }
         }
-        return this.defaults;
+        return JSON.parse(JSON.stringify(this.defaults));
     },
 
     // Save data to localStorage
@@ -471,6 +484,8 @@ function renderStories() {
 
 function addICNote() {
     document.getElementById('note-form').reset();
+    document.getElementById('note-content-input').innerHTML = '';
+    document.getElementById('note-edit-id').value = '';
     document.getElementById('note-type-hidden').value = 'ic';
     document.getElementById('note-modal-title').textContent = 'New In-Character Note';
     openModal('note-modal');
@@ -478,6 +493,8 @@ function addICNote() {
 
 function addOOCNote() {
     document.getElementById('note-form').reset();
+    document.getElementById('note-content-input').innerHTML = '';
+    document.getElementById('note-edit-id').value = '';
     document.getElementById('note-type-hidden').value = 'ooc';
     document.getElementById('note-modal-title').textContent = 'New Out-of-Character Note';
     openModal('note-modal');
@@ -489,10 +506,11 @@ function initNoteForm() {
         e.preventDefault();
 
         const noteType = document.getElementById('note-type-hidden').value;
+        const editId = document.getElementById('note-edit-id').value;
         const contentEditor = document.getElementById('note-content-input');
 
-        const newNote = {
-            id: Date.now(),
+        const noteData = {
+            id: editId ? parseInt(editId) : Date.now(),
             title: document.getElementById('note-title-input').value,
             session: document.getElementById('note-session-input').value,
             content: contentEditor.innerHTML,
@@ -500,63 +518,98 @@ function initNoteForm() {
         };
 
         const data = CampaignData.get();
-        if (noteType === 'dm') {
-            if (!data.dmNotes) data.dmNotes = [];
-            data.dmNotes.push(newNote);
-        } else if (noteType === 'ic') {
-            data.icNotes.push(newNote);
+        const arrayKey = noteType === 'dm' ? 'dmNotes' : noteType === 'ic' ? 'icNotes' : 'oocNotes';
+        if (!data[arrayKey]) data[arrayKey] = [];
+
+        if (editId) {
+            // Update existing note
+            const idx = data[arrayKey].findIndex(n => n.id === parseInt(editId));
+            if (idx !== -1) {
+                data[arrayKey][idx] = noteData;
+            }
         } else {
-            data.oocNotes.push(newNote);
+            data[arrayKey].push(noteData);
         }
         CampaignData.save(data);
 
-        // Clear the editor
+        // Clear the editor and edit id
         contentEditor.innerHTML = '';
+        document.getElementById('note-edit-id').value = '';
 
         renderNotes();
         renderDMNotes();
         const icons = { dm: '🎲', ic: '🎭', ooc: '📋' };
-        CampaignData.addActivity(icons[noteType] || '📋', `New ${noteType.toUpperCase()} note: "${newNote.title}"`);
+        CampaignData.addActivity(icons[noteType] || '📋', `${editId ? 'Updated' : 'New'} ${noteType.toUpperCase()} note: "${noteData.title}"`);
         closeModal('note-modal');
     });
+}
+
+function editNote(noteType, noteId) {
+    const data = CampaignData.get();
+    const arrayKey = noteType === 'dm' ? 'dmNotes' : noteType === 'ic' ? 'icNotes' : 'oocNotes';
+    const note = (data[arrayKey] || []).find(n => n.id === noteId);
+    if (!note) return;
+
+    document.getElementById('note-type-hidden').value = noteType;
+    document.getElementById('note-edit-id').value = noteId;
+    document.getElementById('note-title-input').value = note.title || '';
+    document.getElementById('note-session-input').value = note.session || '';
+    document.getElementById('note-content-input').innerHTML = note.content || '';
+    document.getElementById('note-tags-input').value = (note.tags || []).join(', ');
+    document.getElementById('note-modal-title').textContent = `Edit ${noteType.toUpperCase()} Note`;
+    openModal('note-modal');
+}
+
+function deleteNote(noteType, noteId) {
+    if (!confirm('Are you sure you want to delete this note?')) return;
+    const data = CampaignData.get();
+    const arrayKey = noteType === 'dm' ? 'dmNotes' : noteType === 'ic' ? 'icNotes' : 'oocNotes';
+    if (!data[arrayKey]) return;
+    data[arrayKey] = data[arrayKey].filter(n => n.id !== noteId);
+    CampaignData.save(data);
+    renderNotes();
+    renderDMNotes();
+    CampaignData.addActivity('🗑️', `Deleted ${noteType.toUpperCase()} note`);
 }
 
 function renderNotes() {
     const data = CampaignData.get();
 
-    // IC Notes
-    const icList = document.getElementById('ic-notes-list');
-    icList.innerHTML = data.icNotes.map(note => `
-        <div class="note-card ic">
+    function noteCardHTML(note, type) {
+        return `
+        <div class="note-card ${type}">
             <div class="note-header">
                 <h4>${note.title}</h4>
-                <span class="note-date">${note.session}</span>
+                <div class="note-actions">
+                    <button class="btn btn-small" onclick="editNote('${type}', ${note.id})">Edit</button>
+                    <button class="btn btn-small btn-danger" onclick="deleteNote('${type}', ${note.id})">Delete</button>
+                </div>
             </div>
+            <span class="note-date">${note.session}</span>
             <div class="note-content">
                 ${formatNoteContent(note.content)}
             </div>
             <div class="note-tags">
-                ${note.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                ${(note.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }
+
+    // IC Notes
+    const icList = document.getElementById('ic-notes-list');
+    if (icList) {
+        icList.innerHTML = (data.icNotes || []).length === 0
+            ? '<div class="initiative-empty"><p>No IC notes yet.</p></div>'
+            : data.icNotes.map(note => noteCardHTML(note, 'ic')).join('');
+    }
 
     // OOC Notes
     const oocList = document.getElementById('ooc-notes-list');
-    oocList.innerHTML = data.oocNotes.map(note => `
-        <div class="note-card ooc">
-            <div class="note-header">
-                <h4>${note.title}</h4>
-                <span class="note-date">${note.session}</span>
-            </div>
-            <div class="note-content">
-                ${formatNoteContent(note.content)}
-            </div>
-            <div class="note-tags">
-                ${note.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-            </div>
-        </div>
-    `).join('');
+    if (oocList) {
+        oocList.innerHTML = (data.oocNotes || []).length === 0
+            ? '<div class="initiative-empty"><p>No OOC notes yet.</p></div>'
+            : data.oocNotes.map(note => noteCardHTML(note, 'ooc')).join('');
+    }
 }
 
 function formatNoteContent(content) {
@@ -1545,6 +1598,7 @@ function openResourceModal() {
 function addDMNote() {
     document.getElementById('note-form').reset();
     document.getElementById('note-content-input').innerHTML = '';
+    document.getElementById('note-edit-id').value = '';
     document.getElementById('note-type-hidden').value = 'dm';
     document.getElementById('note-modal-title').textContent = 'New DM Note';
     openModal('note-modal');
@@ -1556,20 +1610,22 @@ function renderDMNotes() {
     if (!dmNotesList) return;
 
     const dmNotes = data.dmNotes || [];
-    // Also include old icNotes for backward compatibility
-    const allDMNotes = [...dmNotes, ...(data.icNotes || [])];
 
-    if (allDMNotes.length === 0) {
+    if (dmNotes.length === 0) {
         dmNotesList.innerHTML = '<div class="initiative-empty"><p>No DM notes yet.</p></div>';
         return;
     }
 
-    dmNotesList.innerHTML = allDMNotes.map(note => `
+    dmNotesList.innerHTML = dmNotes.map(note => `
         <div class="note-card dm">
             <div class="note-header">
                 <h4>${note.title}</h4>
-                <span class="note-date">${note.session}</span>
+                <div class="note-actions">
+                    <button class="btn btn-small" onclick="editNote('dm', ${note.id})">Edit</button>
+                    <button class="btn btn-small btn-danger" onclick="deleteNote('dm', ${note.id})">Delete</button>
+                </div>
             </div>
+            <span class="note-date">${note.session}</span>
             <div class="note-content">
                 ${formatNoteContent(note.content)}
             </div>
@@ -1647,8 +1703,11 @@ function renderSessionSummaries() {
         <div class="session-summary-card">
             <div class="summary-header">
                 <span class="summary-session">Session ${summary.sessionNumber}</span>
-                <span class="summary-date">${summary.datePlayed || ''}</span>
+                <div class="note-actions">
+                    <button class="btn btn-small btn-danger" onclick="deleteSessionSummary(${summary.id})">Delete</button>
+                </div>
             </div>
+            <span class="summary-date">${summary.datePlayed || ''}</span>
             <div class="summary-content">
                 <h4 class="summary-title">${summary.title || 'Untitled Session'}</h4>
                 <div>${summary.content}</div>
@@ -1656,6 +1715,16 @@ function renderSessionSummaries() {
             </div>
         </div>
     `).join('');
+}
+
+function deleteSessionSummary(summaryId) {
+    if (!confirm('Are you sure you want to delete this session summary?')) return;
+    const data = CampaignData.get();
+    if (!data.sessionSummaries) return;
+    data.sessionSummaries = data.sessionSummaries.filter(s => s.id !== summaryId);
+    CampaignData.save(data);
+    renderSessionSummaries();
+    CampaignData.addActivity('🗑️', 'Deleted session summary');
 }
 
 // ===================================
@@ -2060,6 +2129,26 @@ function updateDashboardStats() {
             xpHint.textContent = `${xpNeeded.toLocaleString()} XP needed for Level ${level + 1}`;
         }
     }
+
+    // Update campaign name
+    const nameDisplay = document.getElementById('campaign-name-display');
+    if (nameDisplay) {
+        nameDisplay.textContent = `📍 ${data.campaign.name || 'Campaign Overview'}`;
+    }
+
+    // Update campaign image
+    const campaignImg = document.getElementById('campaign-image');
+    const d20Placeholder = document.getElementById('campaign-d20-placeholder');
+    if (campaignImg && d20Placeholder) {
+        if (data.campaign.campaignImage) {
+            campaignImg.src = data.campaign.campaignImage;
+            campaignImg.style.display = 'block';
+            d20Placeholder.style.display = 'none';
+        } else {
+            campaignImg.style.display = 'none';
+            d20Placeholder.style.display = '';
+        }
+    }
 }
 
 // ===================================
@@ -2069,6 +2158,7 @@ function updateDashboardStats() {
 function openCampaignEditModal() {
     const data = CampaignData.get();
 
+    document.getElementById('campaign-name-input').value = data.campaign.name || 'Waterdeep: Dragon Heist';
     document.getElementById('campaign-chapter-input').value = data.campaign.currentChapter || 'Chapter 1: Along the High Road';
     document.getElementById('campaign-session-input').value = data.campaign.sessionNumber || 1;
     document.getElementById('campaign-location-input').value = data.campaign.currentLocation || 'The High Road';
@@ -2076,7 +2166,29 @@ function openCampaignEditModal() {
     document.getElementById('campaign-xp-input').value = data.campaign.currentXP || 450;
     document.getElementById('campaign-gold-input').value = data.campaign.totalGold || 0;
 
+    // Show image preview if exists
+    const preview = document.getElementById('campaign-image-preview');
+    const removeBtn = document.getElementById('campaign-image-remove-btn');
+    if (data.campaign.campaignImage) {
+        preview.innerHTML = `<img src="${data.campaign.campaignImage}" style="max-width:200px; max-height:150px; border-radius:var(--border-radius);">`;
+        removeBtn.style.display = '';
+    } else {
+        preview.innerHTML = '';
+        removeBtn.style.display = 'none';
+    }
+    // Reset file input
+    document.getElementById('campaign-image-input').value = '';
+
     openModal('campaign-modal');
+}
+
+function removeCampaignImage() {
+    const data = CampaignData.get();
+    data.campaign.campaignImage = '';
+    CampaignData.save(data);
+    document.getElementById('campaign-image-preview').innerHTML = '';
+    document.getElementById('campaign-image-remove-btn').style.display = 'none';
+    updateDashboardStats();
 }
 
 function initCampaignForm() {
@@ -2088,6 +2200,7 @@ function initCampaignForm() {
 
         const data = CampaignData.get();
 
+        data.campaign.name = document.getElementById('campaign-name-input').value;
         data.campaign.currentChapter = document.getElementById('campaign-chapter-input').value;
         data.campaign.sessionNumber = parseInt(document.getElementById('campaign-session-input').value) || 1;
         data.campaign.currentLocation = document.getElementById('campaign-location-input').value;
@@ -2096,10 +2209,24 @@ function initCampaignForm() {
         data.campaign.totalGold = parseInt(document.getElementById('campaign-gold-input').value) || 0;
         data.campaign.sessionsPlayed = data.campaign.sessionNumber;
 
-        CampaignData.save(data);
-        updateDashboardStats();
-        CampaignData.addActivity('📍', 'Campaign overview updated');
-        closeModal('campaign-modal');
+        // Handle image upload
+        const fileInput = document.getElementById('campaign-image-input');
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                data.campaign.campaignImage = ev.target.result;
+                CampaignData.save(data);
+                updateDashboardStats();
+                CampaignData.addActivity('📍', 'Campaign overview updated');
+                closeModal('campaign-modal');
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        } else {
+            CampaignData.save(data);
+            updateDashboardStats();
+            CampaignData.addActivity('📍', 'Campaign overview updated');
+            closeModal('campaign-modal');
+        }
     });
 }
 
@@ -2197,6 +2324,10 @@ window.openResourceModal = openResourceModal;
 // Campaign Notes exports
 window.addDMNote = addDMNote;
 window.addSessionSummary = addSessionSummary;
+window.editNote = editNote;
+window.deleteNote = deleteNote;
+window.deleteSessionSummary = deleteSessionSummary;
+window.removeCampaignImage = removeCampaignImage;
 
 // Initiative Tracker exports
 window.togglePCInEncounter = togglePCInEncounter;
