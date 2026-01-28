@@ -2697,6 +2697,15 @@ a:hover {
     background: rgba(0, 0, 0, 0.2);
     display: flex;
     justify-content: flex-end;
+    gap: var(--spacing-sm);
+}
+
+.evidence-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    align-items: flex-end;
+    flex-shrink: 0;
 }
 
 /* Evidence List */
