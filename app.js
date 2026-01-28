@@ -1229,6 +1229,48 @@ function cancelEditRules(ruleId) {
 // Session Info
 // ===================================
 
+function toggleSessionEdit() {
+    const display = document.getElementById('session-display');
+    const edit = document.getElementById('session-edit');
+
+    if (display.classList.contains('hidden')) {
+        // Switch to display mode
+        display.classList.remove('hidden');
+        edit.classList.add('hidden');
+    } else {
+        // Switch to edit mode
+        display.classList.add('hidden');
+        edit.classList.remove('hidden');
+    }
+}
+
+function formatSessionDateTime(dateTimeString) {
+    if (!dateTimeString) return 'Not scheduled';
+
+    const date = new Date(dateTimeString);
+    const options = {
+        weekday: 'short',
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    return date.toLocaleString('en-US', options);
+}
+
+function updateSessionDisplay() {
+    const data = CampaignData.get();
+
+    const dateDisplay = document.getElementById('session-date-display');
+    const locationDisplay = document.getElementById('session-location-display');
+    const notesDisplay = document.getElementById('session-notes-display');
+
+    dateDisplay.textContent = formatSessionDateTime(data.campaign.nextSessionDate);
+    locationDisplay.textContent = data.campaign.nextSessionLocation || 'Not set';
+    notesDisplay.textContent = data.campaign.sessionNotes || 'No notes yet';
+}
+
 function saveSessionInfo() {
     const date = document.getElementById('next-session-date').value;
     const location = document.getElementById('next-session-location').value;
@@ -1241,6 +1283,10 @@ function saveSessionInfo() {
     CampaignData.save(data);
 
     CampaignData.addActivity('📅', 'Session info updated');
+
+    // Update display and switch to display mode
+    updateSessionDisplay();
+    toggleSessionEdit();
 }
 
 function loadSessionInfo() {
@@ -1255,6 +1301,9 @@ function loadSessionInfo() {
     if (data.campaign.sessionNotes) {
         document.getElementById('session-notes').value = data.campaign.sessionNotes;
     }
+
+    // Also update the display view
+    updateSessionDisplay();
 }
 
 // ===================================

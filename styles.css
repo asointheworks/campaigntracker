@@ -449,7 +449,7 @@ a:hover {
 
 .session-field label {
     font-size: 0.85rem;
-    color: var(--gold);
+    color: var(--accent-gold);
     font-weight: 500;
 }
 
@@ -468,6 +468,38 @@ a:hover {
 .session-notes {
     min-height: 80px;
     resize: vertical;
+}
+
+/* Session Display View */
+.session-display {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.session-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+}
+
+.session-notes-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.session-notes-display {
+    font-family: var(--font-body);
+    color: var(--parchment);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    padding: var(--spacing-sm);
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius-sm);
+    min-height: 60px;
 }
 
 /* Synopsis */
