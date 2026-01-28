@@ -118,9 +118,28 @@
                 <div class="card next-session">
                     <div class="card-header">
                         <h3>📅 Next Session</h3>
+                        <button class="btn btn-small" onclick="toggleSessionEdit()">Edit</button>
                     </div>
                     <div class="card-content">
-                        <div class="session-info">
+                        <!-- Display View -->
+                        <div id="session-display" class="session-display">
+                            <div class="session-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Date & Time</span>
+                                    <span class="detail-value" id="session-date-display">Not scheduled</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Location</span>
+                                    <span class="detail-value" id="session-location-display">Not set</span>
+                                </div>
+                            </div>
+                            <div class="session-notes-section">
+                                <span class="detail-label">Session Prep & Details</span>
+                                <div class="session-notes-display" id="session-notes-display">No notes yet</div>
+                            </div>
+                        </div>
+                        <!-- Edit View -->
+                        <div id="session-edit" class="session-info hidden">
                             <div class="session-field">
                                 <label for="next-session-date">Date & Time</label>
                                 <input type="datetime-local" id="next-session-date" class="session-date-input">
