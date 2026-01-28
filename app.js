@@ -125,6 +125,7 @@ function startFirestoreListener() {
                     renderQuests();
                     renderGallery();
                     renderStories();
+                    renderRules();
                     updateDashboardStats();
                     CampaignData.renderActivity();
                 } catch (e) {
@@ -1157,6 +1158,20 @@ function cancelEditSynopsis() {
 // Rules Editing
 // ===================================
 
+function renderRules() {
+    const data = CampaignData.get();
+    if (!data.rules) return;
+    Object.keys(data.rules).forEach(ruleId => {
+        const content = document.getElementById(`${ruleId}-content`) || (document.getElementById(`rule-${ruleId}`) ? document.getElementById(`rule-${ruleId}`).querySelector('.rule-content') : null);
+        if (content) {
+            const display = content.querySelector('.rule-display');
+            if (display && data.rules[ruleId]) {
+                display.innerHTML = data.rules[ruleId];
+            }
+        }
+    });
+}
+
 function toggleEditRules(ruleId) {
     const content = document.getElementById(`${ruleId}-content`) || document.getElementById(`rule-${ruleId}`).querySelector('.rule-content');
     const display = content.querySelector('.rule-display');
@@ -1167,7 +1182,8 @@ function toggleEditRules(ruleId) {
     edit.classList.toggle('hidden');
 
     if (!edit.classList.contains('hidden')) {
-        editor.innerHTML = display.innerHTML;
+        const data = CampaignData.get();
+        editor.innerHTML = (data.rules && data.rules[ruleId]) ? data.rules[ruleId] : display.innerHTML;
         editor.focus();
     }
 }
@@ -2664,6 +2680,7 @@ async function confirmImport() {
         renderQuests();
         renderGallery();
         renderStories();
+        renderRules();
         updateDashboardStats();
         CampaignData.renderActivity();
         updateStorageInfo();
@@ -2785,6 +2802,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderLocations();
     renderQuests();
     renderGallery();
+    renderRules();
     loadPCsForInitiative();
     renderInitiativeList();
 
