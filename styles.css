@@ -2245,11 +2245,23 @@ a:hover {
 
 .initiative-layout {
     display: grid;
-    grid-template-columns: 250px 1fr 300px;
-    gap: var(--spacing-lg);
+    grid-template-columns: 200px 200px 1fr 280px;
+    gap: var(--spacing-md);
+}
+
+@media (max-width: 1400px) {
+    .initiative-layout {
+        grid-template-columns: 180px 180px 1fr 250px;
+    }
 }
 
 @media (max-width: 1200px) {
+    .initiative-layout {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
     .initiative-layout {
         grid-template-columns: 1fr;
     }
@@ -2293,8 +2305,9 @@ a:hover {
     font-size: 0.85rem;
 }
 
-/* PC Selection */
-.pc-selection {
+/* PC and NPC Selection */
+.pc-selection,
+.npc-selection {
     padding: var(--spacing-md);
     display: flex;
     flex-direction: column;
@@ -2410,8 +2423,49 @@ a:hover {
     font-size: 1.5rem;
     font-weight: bold;
     color: var(--accent-gold);
-    min-width: 40px;
+    min-width: 50px;
     text-align: center;
+}
+
+.init-input {
+    width: 50px;
+    padding: 4px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--accent-gold);
+    transition: all 0.2s;
+}
+
+.init-input:hover {
+    border-color: var(--accent-gold);
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.init-input:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+    background: rgba(212, 175, 55, 0.2);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
+}
+
+.init-input::placeholder {
+    color: var(--parchment-dark);
+    opacity: 0.6;
+}
+
+/* Hide number input spinners */
+.init-input::-webkit-outer-spin-button,
+.init-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.init-input[type=number] {
+    -moz-appearance: textfield;
 }
 
 .init-info {
