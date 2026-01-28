@@ -1744,6 +1744,31 @@ function saveCharacterData() {
 // PC Tales Functions
 // ===================================
 
+function editTale(taleId) {
+    const data = CampaignData.get();
+    const tale = data.tales.find(t => t.id === taleId);
+    if (!tale) return;
+
+    document.getElementById('tale-edit-id').value = taleId;
+    document.getElementById('tale-title-input').value = tale.title || '';
+    document.getElementById('tale-type-select').value = tale.type;
+    document.getElementById('tale-author-input').value = tale.author || '';
+    document.getElementById('tale-session-input').value = tale.session || '';
+    document.getElementById('tale-content-input').innerHTML = tale.content || '';
+    document.getElementById('tale-modal-title').textContent = 'Edit Entry';
+    openModal('tale-modal');
+}
+
+function deleteTale(taleId) {
+    if (!confirm('Are you sure you want to delete this entry?')) return;
+    const data = CampaignData.get();
+    if (!data.tales) return;
+    data.tales = data.tales.filter(t => t.id !== taleId);
+    CampaignData.save(data);
+    renderTales();
+    CampaignData.addActivity('🗑️', 'Deleted PC Tales entry');
+}
+
 function openTaleModal(type = 'journal') {
     document.getElementById('tale-form').reset();
     document.getElementById('tale-edit-id').value = '';
@@ -1821,7 +1846,11 @@ function renderTales() {
                         <p class="evidence-source">${e.author || 'Unknown source'} • ${e.session || ''}</p>
                         <div class="tale-preview">${stripHtml(e.content).substring(0, 150)}...</div>
                     </div>
-                    <button class="btn btn-small" onclick="viewTale(${e.id})">View</button>
+                    <div class="evidence-actions">
+                        <button class="btn btn-small" onclick="viewTale(${e.id})">View</button>
+                        <button class="btn btn-small" onclick="editTale(${e.id})">Edit</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteTale(${e.id})">Delete</button>
+                    </div>
                 </div>
             `).join('');
         }
@@ -1853,6 +1882,8 @@ function renderTaleCard(tale) {
             </div>
             <div class="tale-footer">
                 <button class="btn btn-small" onclick="viewTale(${tale.id})">Read</button>
+                <button class="btn btn-small" onclick="editTale(${tale.id})">Edit</button>
+                <button class="btn btn-small btn-danger" onclick="deleteTale(${tale.id})">Delete</button>
             </div>
         </div>
     `;
