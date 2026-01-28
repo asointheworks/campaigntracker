@@ -870,6 +870,7 @@ function initNPCForm() {
 
 function renderNPCs() {
     const grid = document.getElementById('npc-grid');
+    if (!grid) return;
     const data = CampaignData.get();
 
     // Pull NPCs from Party tab characters
@@ -938,6 +939,7 @@ function initLocationForm() {
 
 function renderLocations() {
     const list = document.getElementById('locations-list');
+    if (!list) return;
     const data = CampaignData.get();
 
     // Default locations
@@ -1016,6 +1018,7 @@ function initQuestForm() {
 
 function renderQuests() {
     const list = document.getElementById('quests-list');
+    if (!list) return;
     const data = CampaignData.get();
 
     list.innerHTML = data.quests.map(quest => `
