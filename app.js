@@ -304,7 +304,7 @@ const CampaignData = {
         rules: {},
         // PC Tales data
         tales: [],
-        evidence: [],
+
         resources: {
             gold: 0,
             goldNotes: 'Track party treasury here',
@@ -1798,28 +1798,25 @@ function renderTales() {
         }
     }
 
-    // Evidence
-    const evidenceList = document.getElementById('evidence-list');
-    if (evidenceList) {
-        const evidence = data.tales.filter(t => t.type === 'evidence');
-        if (evidence.length === 0) {
-            evidenceList.innerHTML = '<div class="initiative-empty"><p>No evidence or documents collected yet.</p></div>';
+    // Relationship Snippets
+    const relationshipsGrid = document.getElementById('relationships-grid');
+    if (relationshipsGrid) {
+        const relationships = data.tales.filter(t => t.type === 'relationship');
+        if (relationships.length === 0) {
+            relationshipsGrid.innerHTML = '<div class="initiative-empty"><p>No relationship snippets yet. Add your first one!</p></div>';
         } else {
-            evidenceList.innerHTML = evidence.map(e => `
-                <div class="evidence-card">
-                    <div class="evidence-icon">📜</div>
-                    <div class="evidence-info">
-                        <h4 class="evidence-title">${e.title}</h4>
-                        <p class="evidence-source">${e.author || 'Unknown source'} • ${e.session || ''}</p>
-                        <div class="tale-preview">${stripHtml(e.content).substring(0, 150)}...</div>
-                    </div>
-                    <div class="evidence-actions">
-                        <button class="btn btn-small" onclick="viewTale(${e.id})">View</button>
-                        <button class="btn btn-small" onclick="editTale(${e.id})">Edit</button>
-                        <button class="btn btn-small btn-danger" onclick="deleteTale(${e.id})">Delete</button>
-                    </div>
-                </div>
-            `).join('');
+            relationshipsGrid.innerHTML = relationships.map(tale => renderTaleCard(tale)).join('');
+        }
+    }
+
+    // Background Stories
+    const backgroundsGrid = document.getElementById('backgrounds-grid');
+    if (backgroundsGrid) {
+        const backgrounds = data.tales.filter(t => t.type === 'background');
+        if (backgrounds.length === 0) {
+            backgroundsGrid.innerHTML = '<div class="initiative-empty"><p>No background stories yet. Add your first one!</p></div>';
+        } else {
+            backgroundsGrid.innerHTML = backgrounds.map(tale => renderTaleCard(tale)).join('');
         }
     }
 
@@ -2628,7 +2625,7 @@ async function exportPlayerData() {
             exportedAt: new Date().toISOString(),
             campaignData: {
                 tales: data.tales || [],
-                evidence: data.evidence || [],
+
                 files: data.files || [],
                 stories: data.stories || []
             },
@@ -2753,7 +2750,7 @@ async function confirmImport() {
         const imported = bundle.campaignData;
 
         // Merge arrays by ID (skip duplicates)
-        const arrayKeys = ['tales', 'evidence', 'stories', 'files', 'characters', 'npcs', 'locations', 'quests',
+        const arrayKeys = ['tales', 'stories', 'files', 'characters', 'npcs', 'locations', 'quests',
                           'icNotes', 'oocNotes', 'dmNotes', 'sessionSummaries', 'gallery', 'activity'];
 
         for (const key of arrayKeys) {
