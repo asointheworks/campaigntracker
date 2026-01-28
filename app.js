@@ -1293,6 +1293,7 @@ function openCharacterModal(characterId = null) {
             document.getElementById('character-level-input').value = character.level || 1;
             document.getElementById('character-ac-input').value = character.ac || 10;
             document.getElementById('character-init-input').value = character.initiative || '+0';
+            document.getElementById('character-deceased-input').checked = !!character.deceased;
             resetPortraitState();
             if (character.portrait && character.portrait.startsWith('data:')) {
                 _portraitDataUrl = character.portrait;
@@ -1446,6 +1447,7 @@ function initCharacterForm() {
             level: parseInt(document.getElementById('character-level-input').value) || 1,
             ac: parseInt(document.getElementById('character-ac-input').value) || 10,
             initiative: document.getElementById('character-init-input').value || '+0',
+            deceased: document.getElementById('character-deceased-input').checked,
             portrait: getPortraitValue() || getDefaultPortrait(document.getElementById('character-type-input').value),
             background: backgroundEditor.innerHTML,
             createdAt: currentEditingCharacterId ? undefined : new Date().toISOString()
@@ -1519,14 +1521,14 @@ function renderCharacters(filter = 'all') {
 
     grid.innerHTML = characters.map(char => {
         return `
-            <div class="character-card" data-character-id="${char.id}" data-type="${char.type}">
+            <div class="character-card${char.deceased ? ' deceased' : ''}" data-character-id="${char.id}" data-type="${char.type}">
                 <span class="character-type-badge ${char.type}">${char.type.toUpperCase()}</span>
                 <div class="character-portrait">
                     <img src="${char.portrait || getDefaultPortrait(char.type)}" alt="${char.name}" class="portrait-img" onerror="this.src='${getDefaultPortrait(char.type)}'">
                     <div class="level-badge">Lvl ${char.level}</div>
                 </div>
                 <div class="character-info">
-                    <h3 class="char-name">${char.name}</h3>
+                    <h3 class="char-name">${char.name}${char.deceased ? ' <span class="deceased-tag">Deceased</span>' : ''}</h3>
                     <p class="char-race-class">${char.raceClass}</p>
                     ${char.player ? `<p class="char-player">${char.type === 'pc' ? 'Player' : 'Controlled by'}: ${char.player}</p>` : ''}
                     <div class="char-stats">
