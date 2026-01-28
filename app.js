@@ -124,7 +124,6 @@ function startFirestoreListener() {
                     renderLocations();
                     renderQuests();
                     renderGallery();
-                    renderUploadedFiles();
                     renderStories();
                     updateDashboardStats();
                     CampaignData.renderActivity();
@@ -1116,142 +1115,6 @@ function closeLightbox() {
     document.getElementById('lightbox').classList.remove('active');
 }
 
-// ===================================
-// File Upload
-// ===================================
-
-function initFileUpload() {
-    const uploadZone = document.getElementById('upload-zone');
-    const fileInput = document.getElementById('file-input');
-
-    if (!uploadZone || !fileInput) return;
-
-    uploadZone.addEventListener('click', () => fileInput.click());
-
-    uploadZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadZone.classList.add('dragover');
-    });
-
-    uploadZone.addEventListener('dragleave', () => {
-        uploadZone.classList.remove('dragover');
-    });
-
-    uploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadZone.classList.remove('dragover');
-        handleFiles(e.dataTransfer.files);
-    });
-
-    fileInput.addEventListener('change', () => {
-        handleFiles(fileInput.files);
-    });
-}
-
-function handleFiles(files) {
-    Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const fileData = {
-                id: Date.now() + Math.floor(Math.random() * 1000),
-                name: file.name,
-                size: formatFileSize(file.size),
-                rawSize: file.size,
-                type: file.type,
-                data: e.target.result,
-                uploadedAt: new Date().toISOString()
-            };
-
-            // Store file data in IndexedDB (handles larger files)
-            try {
-                await FileStore.saveFile(fileData);
-
-                // Store only metadata (no data blob) in localStorage for listing
-                const data = CampaignData.get();
-                data.files.push({
-                    id: fileData.id,
-                    name: fileData.name,
-                    size: fileData.size,
-                    rawSize: fileData.rawSize,
-                    type: fileData.type,
-                    uploadedAt: fileData.uploadedAt
-                });
-                CampaignData.save(data);
-
-                renderUploadedFiles();
-                CampaignData.addActivity('📁', `File uploaded: "${file.name}"`);
-                updateStorageInfo();
-            } catch (err) {
-                console.error('Error saving file to IndexedDB:', err);
-                alert(`Failed to save "${file.name}". The file may be too large.`);
-            }
-        };
-        reader.readAsDataURL(file);
-    });
-}
-
-function formatFileSize(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / 1048576).toFixed(1) + ' MB';
-}
-
-function renderUploadedFiles() {
-    const container = document.getElementById('uploaded-files');
-    const data = CampaignData.get();
-
-    if (!container) return;
-
-    container.innerHTML = data.files.map(file => {
-        const icon = getFileIcon(file.type);
-        return `
-            <div class="file-item">
-                <span class="file-icon">${icon}</span>
-                <div class="file-info">
-                    <span class="file-name">${file.name}</span>
-                    <span class="file-size">${file.size}</span>
-                </div>
-                <button class="btn btn-small" onclick="downloadFile(${file.id})" title="Download">⬇</button>
-                <button class="file-remove" onclick="removeFile(${file.id})">×</button>
-            </div>
-        `;
-    }).join('');
-}
-
-function getFileIcon(type) {
-    if (type.startsWith('image/')) return '🖼️';
-    if (type === 'application/pdf') return '📄';
-    if (type.includes('word') || type.includes('document')) return '📝';
-    return '📎';
-}
-
-async function removeFile(fileId) {
-    const data = CampaignData.get();
-    data.files = data.files.filter(f => f.id !== fileId);
-    CampaignData.save(data);
-    try { await FileStore.deleteFile(fileId); } catch (e) { /* ignore */ }
-    renderUploadedFiles();
-    updateStorageInfo();
-}
-
-async function downloadFile(fileId) {
-    try {
-        const file = await FileStore.getFile(fileId);
-        if (!file || !file.data) {
-            alert('File data not found. It may have been stored in an older format.');
-            return;
-        }
-        const link = document.createElement('a');
-        link.href = file.data;
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    } catch (e) {
-        console.error('Error downloading file:', e);
-        alert('Could not download file.');
-    }
-}
 
 // ===================================
 // Synopsis Editing
@@ -2800,7 +2663,6 @@ async function confirmImport() {
         renderLocations();
         renderQuests();
         renderGallery();
-        renderUploadedFiles();
         renderStories();
         updateDashboardStats();
         CampaignData.renderActivity();
@@ -2894,7 +2756,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initRulesNav();
     initFilters();
     initModals();
-    initFileUpload();
     initContentEditable();
     initCharacterFilters();
 
@@ -2924,7 +2785,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderLocations();
     renderQuests();
     renderGallery();
-    renderUploadedFiles();
     loadPCsForInitiative();
     renderInitiativeList();
 
