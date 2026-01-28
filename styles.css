@@ -301,7 +301,15 @@ a:hover {
 }
 
 .campaign-overview {
-    grid-column: span 2;
+    grid-column: span 1;
+}
+
+.next-session {
+    grid-column: span 1;
+}
+
+.recent-activity {
+    grid-column: 1 / -1;
 }
 
 .synopsis.full-width {

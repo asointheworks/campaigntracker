@@ -114,49 +114,6 @@
                     </div>
                 </div>
 
-                <!-- Quick Stats -->
-                <div class="card quick-stats">
-                    <div class="card-header">
-                        <h3>📊 Party Stats</h3>
-                    </div>
-                    <div class="card-content">
-                        <div class="stat-grid">
-                            <div class="stat-item">
-                                <span class="stat-number">5</span>
-                                <span class="stat-label">Players</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number" id="party-level">1</span>
-                                <span class="stat-label">Party Level</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number" id="total-gold">0</span>
-                                <span class="stat-label">Gold (Party)</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number" id="sessions-played">0</span>
-                                <span class="stat-label">Sessions</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Activity -->
-                <div class="card recent-activity">
-                    <div class="card-header">
-                        <h3>⏰ Recent Activity</h3>
-                    </div>
-                    <div class="card-content">
-                        <ul class="activity-list" id="activity-list">
-                            <li class="activity-item">
-                                <span class="activity-icon">🎭</span>
-                                <span class="activity-text">Campaign created - Waterdeep: Dragon Heist begins!</span>
-                                <span class="activity-time">Just now</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
                 <!-- Next Session -->
                 <div class="card next-session">
                     <div class="card-header">
@@ -205,36 +162,20 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Data Management Card -->
-            <div class="card data-management full-width">
-                <div class="card-header">
-                    <h3>💾 Data Management</h3>
-                </div>
-                <div class="card-content">
-                    <p class="data-mgmt-description">Export your campaign data to share with other players or back it up. Import data bundles from players to merge their submissions into the tracker.</p>
-                    <div class="data-mgmt-info" id="storage-info">
-                        <span class="storage-badge">localStorage: calculating...</span>
-                        <span class="storage-badge">IndexedDB files: calculating...</span>
+                <!-- Recent Activity -->
+                <div class="card recent-activity">
+                    <div class="card-header">
+                        <h3>⏰ Recent Activity</h3>
                     </div>
-                    <div class="data-mgmt-actions">
-                        <div class="export-group">
-                            <h4>Export</h4>
-                            <p class="data-mgmt-hint">Download all campaign data as a file you can share or back up.</p>
-                            <button class="btn btn-primary" onclick="exportAllData()">Export All Data</button>
-                            <button class="btn btn-secondary" onclick="exportPlayerData()">Export Player Data Only</button>
-                        </div>
-                        <div class="import-group">
-                            <h4>Import</h4>
-                            <p class="data-mgmt-hint">Import a data bundle from a player or a previous backup. Existing data will be merged (not overwritten).</p>
-                            <div class="import-zone" id="import-zone">
-                                <div class="upload-icon">📥</div>
-                                <p>Drag & drop a .json export file here or click to browse</p>
-                                <input type="file" id="import-file-input" accept=".json" hidden>
-                            </div>
-                            <div id="import-preview" class="import-preview hidden"></div>
-                        </div>
+                    <div class="card-content">
+                        <ul class="activity-list" id="activity-list">
+                            <li class="activity-item">
+                                <span class="activity-icon">🎭</span>
+                                <span class="activity-text">Campaign created - Waterdeep: Dragon Heist begins!</span>
+                                <span class="activity-time">Just now</span>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -246,6 +187,33 @@
                 <h2>Characters</h2>
                 <p class="section-subtitle">Heroes & Allies of Waterdeep</p>
                 <button class="btn btn-primary" onclick="openCharacterModal()">+ Add Character</button>
+            </div>
+
+            <!-- Party Stats -->
+            <div class="card quick-stats">
+                <div class="card-header">
+                    <h3>📊 Party Stats</h3>
+                </div>
+                <div class="card-content">
+                    <div class="stat-grid">
+                        <div class="stat-item">
+                            <span class="stat-number">5</span>
+                            <span class="stat-label">Players</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="party-level">1</span>
+                            <span class="stat-label">Party Level</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="total-gold">0</span>
+                            <span class="stat-label">Gold (Party)</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="sessions-played">0</span>
+                            <span class="stat-label">Sessions</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Character Filters -->
