@@ -1460,14 +1460,14 @@ function initCharacterForm() {
                 characterData.createdAt = data.characters[index].createdAt;
                 data.characters[index] = characterData;
             }
+            CampaignData.save(data);
             CampaignData.addActivity('⚔️', `Updated character: "${characterData.name}"`);
         } else {
             // Add new character
             data.characters.push(characterData);
+            CampaignData.save(data);
             CampaignData.addActivity('⚔️', `Added new ${characterData.type.toUpperCase()}: "${characterData.name}"`);
         }
-
-        CampaignData.save(data);
         renderCharacters();
         loadPCsForInitiative(); // Refresh initiative tracker PC list
         closeModal('character-modal');
