@@ -870,35 +870,19 @@ function renderNPCs() {
     const grid = document.getElementById('npc-grid');
     const data = CampaignData.get();
 
-    // Combine default NPCs with saved ones
-    const defaultNPCs = [
-        {
-            id: 'durnan',
-            name: 'Durnan',
-            role: 'Owner of the Yawning Portal',
-            image: D20_PLACEHOLDER,
-            description: 'A retired adventurer and the stoic proprietor of Waterdeep\'s most famous tavern. His eyes hold secrets of Undermountain that he rarely shares.',
-            status: 'friendly'
-        },
-        {
-            id: 'volo',
-            name: 'Volothamp Geddarm (Volo)',
-            role: 'Famous Author & Raconteur',
-            image: D20_PLACEHOLDER,
-            description: 'The flamboyant author of "Volo\'s Guide to Monsters" and many other works. Currently working on a new book about Waterdeep.',
-            status: 'quest-giver'
-        },
-        {
-            id: 'floon',
-            name: 'Floon Blagmaar',
-            role: 'Volo\'s Friend',
-            image: D20_PLACEHOLDER,
-            description: 'A handsome but somewhat vapid young man who has gone missing. His disappearance kicks off the adventure.',
-            status: 'missing'
-        }
-    ];
+    // Pull NPCs from Party tab characters
+    const partyNPCs = data.characters
+        .filter(c => c.type === 'npc')
+        .map(c => ({
+            id: c.id,
+            name: c.name,
+            role: c.species && c.charClass ? `${c.species} ${c.charClass}${c.subclass ? ' (' + c.subclass + ')' : ''}` : (c.raceClass || ''),
+            image: c.portrait || D20_PLACEHOLDER,
+            description: c.background ? c.background.replace(/<[^>]*>/g, '') : '',
+            status: 'neutral'
+        }));
 
-    const allNPCs = [...defaultNPCs, ...data.npcs];
+    const allNPCs = [...partyNPCs, ...data.npcs];
 
     grid.innerHTML = allNPCs.map(npc => `
         <div class="npc-card">
