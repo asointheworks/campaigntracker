@@ -1423,11 +1423,12 @@ function openCharacterModal(characterId = null) {
             // Populate form
             document.getElementById('character-edit-id').value = characterId;
             document.getElementById('character-name-input').value = character.name;
-            document.getElementById('character-race-class-input').value = character.raceClass;
+            document.getElementById('character-species-input').value = character.species || '';
+            document.getElementById('character-class-input').value = character.charClass || '';
+            updateSubclassOptions();
+            document.getElementById('character-subclass-input').value = character.subclass || '';
             document.getElementById('character-player-input').value = character.player || '';
             document.getElementById('character-level-input').value = character.level || 1;
-            document.getElementById('character-hp-current').value = character.currentHp || 10;
-            document.getElementById('character-hp-max').value = character.maxHp || 10;
             document.getElementById('character-ac-input').value = character.ac || 10;
             document.getElementById('character-init-input').value = character.initiative || '+0';
             resetPortraitState();
@@ -1469,6 +1470,60 @@ function setCharacterType(type) {
     } else {
         playerRow.querySelector('label[for="character-player-input"]').textContent = 'Player Name';
     }
+}
+
+// Subclass options (2024 D&D rules)
+const SUBCLASS_DATA = {
+    Barbarian: ['Path of the Berserker', 'Path of the Wild Heart', 'Path of the World Tree', 'Path of the Zealot'],
+    Bard: ['College of Dance', 'College of Glamour', 'College of Lore', 'College of Valor'],
+    Cleric: ['Life Domain', 'Light Domain', 'Trickery Domain', 'War Domain'],
+    Druid: ['Circle of the Land', 'Circle of the Moon', 'Circle of the Sea', 'Circle of the Stars'],
+    Fighter: ['Battle Master', 'Champion', 'Eldritch Knight', 'Psi Warrior'],
+    Monk: ['Warrior of Mercy', 'Warrior of Shadow', 'Warrior of the Elements', 'Warrior of the Open Hand'],
+    Paladin: ['Oath of Devotion', 'Oath of Glory', 'Oath of the Ancients', 'Oath of Vengeance'],
+    Ranger: ['Beast Master', 'Fey Wanderer', 'Gloom Stalker', 'Hunter'],
+    Rogue: ['Arcane Trickster', 'Assassin', 'Soulknife', 'Thief'],
+    Sorcerer: ['Aberrant Sorcery', 'Clockwork Sorcery', 'Draconic Sorcery', 'Wild Magic Sorcery'],
+    Warlock: ['Archfey Patron', 'Celestial Patron', 'Fiend Patron', 'Great Old One Patron'],
+    Wizard: ['Abjurer', 'Diviner', 'Evoker', 'Illusionist']
+};
+
+function updateSubclassOptions() {
+    const classSelect = document.getElementById('character-class-input');
+    const subclassSelect = document.getElementById('character-subclass-input');
+    const selectedClass = classSelect.value;
+
+    subclassSelect.innerHTML = '<option value="">None</option>';
+    if (selectedClass && SUBCLASS_DATA[selectedClass]) {
+        SUBCLASS_DATA[selectedClass].forEach(sub => {
+            const opt = document.createElement('option');
+            opt.value = sub;
+            opt.textContent = sub;
+            subclassSelect.appendChild(opt);
+        });
+    }
+}
+
+function viewCharacter(characterId) {
+    const data = CampaignData.get();
+    const char = data.characters.find(c => c.id === characterId);
+    if (!char) return;
+
+    document.getElementById('story-view-title').textContent = char.name;
+    document.getElementById('story-view-type').textContent = char.type.toUpperCase();
+    document.getElementById('story-view-type').className = `tale-type-badge ${char.type}`;
+    document.getElementById('story-view-author').textContent = char.player ? (char.type === 'pc' ? `Player: ${char.player}` : `Controlled by: ${char.player}`) : '';
+    document.getElementById('story-view-date').textContent = `Level ${char.level}`;
+    document.getElementById('story-view-content').innerHTML = `
+        <p><strong>${char.raceClass}</strong></p>
+        <div class="stat-row" style="margin: 1rem 0; gap: 1.5rem; display: flex;">
+            <span class="mini-stat">AC: ${char.ac}</span>
+            <span class="mini-stat">Initiative: ${char.initiative}</span>
+        </div>
+        <hr style="border-color: rgba(212,175,55,0.2); margin: 1rem 0;">
+        ${char.background || '<em>No background notes yet.</em>'}
+    `;
+    openModal('story-view-modal');
 }
 
 // Portrait upload handling
@@ -1544,15 +1599,21 @@ function initCharacterForm() {
         e.preventDefault();
 
         const backgroundEditor = document.getElementById('character-background-content');
+        const species = document.getElementById('character-species-input').value;
+        const charClass = document.getElementById('character-class-input').value;
+        const subclass = document.getElementById('character-subclass-input').value;
+        const raceClass = [species, subclass ? `${charClass} (${subclass})` : charClass].filter(Boolean).join(' ');
+
         const characterData = {
             id: currentEditingCharacterId || Date.now(),
             type: document.getElementById('character-type-input').value,
             name: document.getElementById('character-name-input').value,
-            raceClass: document.getElementById('character-race-class-input').value,
+            raceClass: raceClass,
+            species: species,
+            charClass: charClass,
+            subclass: subclass,
             player: document.getElementById('character-player-input').value,
             level: parseInt(document.getElementById('character-level-input').value) || 1,
-            currentHp: parseInt(document.getElementById('character-hp-current').value) || 10,
-            maxHp: parseInt(document.getElementById('character-hp-max').value) || 10,
             ac: parseInt(document.getElementById('character-ac-input').value) || 10,
             initiative: document.getElementById('character-init-input').value || '+0',
             portrait: getPortraitValue() || getDefaultPortrait(document.getElementById('character-type-input').value),
@@ -1627,9 +1688,6 @@ function renderCharacters(filter = 'all') {
     }
 
     grid.innerHTML = characters.map(char => {
-        const hpPercent = Math.round((char.currentHp / char.maxHp) * 100);
-        const hpColor = hpPercent > 50 ? '#27ae60' : hpPercent > 25 ? '#f39c12' : '#e74c3c';
-
         return `
             <div class="character-card" data-character-id="${char.id}" data-type="${char.type}">
                 <span class="character-type-badge ${char.type}">${char.type.toUpperCase()}</span>
@@ -1642,10 +1700,6 @@ function renderCharacters(filter = 'all') {
                     <p class="char-race-class">${char.raceClass}</p>
                     ${char.player ? `<p class="char-player">${char.type === 'pc' ? 'Player' : 'Controlled by'}: ${char.player}</p>` : ''}
                     <div class="char-stats">
-                        <div class="hp-bar">
-                            <div class="hp-fill" style="width: ${hpPercent}%; background: linear-gradient(90deg, ${hpColor}, ${hpColor}dd)"></div>
-                            <span class="hp-text">HP: ${char.currentHp}/${char.maxHp}</span>
-                        </div>
                         <div class="stat-row">
                             <span class="mini-stat">AC: ${char.ac}</span>
                             <span class="mini-stat">Init: ${char.initiative}</span>
@@ -1656,6 +1710,7 @@ function renderCharacters(filter = 'all') {
                     </div>
                 </div>
                 <div class="char-actions">
+                    <button class="btn btn-small" onclick="viewCharacter(${char.id})">View</button>
                     <button class="btn btn-small" onclick="openCharacterModal(${char.id})">Edit</button>
                 </div>
             </div>

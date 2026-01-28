@@ -1551,9 +1551,48 @@
                             <label for="character-name-input">Character Name</label>
                             <input type="text" id="character-name-input" required placeholder="e.g., Krak, Elara Moonshadow">
                         </div>
+                    </div>
+
+                    <div class="form-row">
                         <div class="form-group">
-                            <label for="character-race-class-input">Race & Class</label>
-                            <input type="text" id="character-race-class-input" required placeholder="e.g., Human Barbarian, Elf Wizard">
+                            <label for="character-species-input">Species</label>
+                            <select id="character-species-input" required>
+                                <option value="">Select Species...</option>
+                                <option value="Aasimar">Aasimar</option>
+                                <option value="Dragonborn">Dragonborn</option>
+                                <option value="Dwarf">Dwarf</option>
+                                <option value="Elf">Elf</option>
+                                <option value="Gnome">Gnome</option>
+                                <option value="Goliath">Goliath</option>
+                                <option value="Halfling">Halfling</option>
+                                <option value="Human">Human</option>
+                                <option value="Orc">Orc</option>
+                                <option value="Tiefling">Tiefling</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="character-class-input">Class</label>
+                            <select id="character-class-input" required onchange="updateSubclassOptions()">
+                                <option value="">Select Class...</option>
+                                <option value="Barbarian">Barbarian</option>
+                                <option value="Bard">Bard</option>
+                                <option value="Cleric">Cleric</option>
+                                <option value="Druid">Druid</option>
+                                <option value="Fighter">Fighter</option>
+                                <option value="Monk">Monk</option>
+                                <option value="Paladin">Paladin</option>
+                                <option value="Ranger">Ranger</option>
+                                <option value="Rogue">Rogue</option>
+                                <option value="Sorcerer">Sorcerer</option>
+                                <option value="Warlock">Warlock</option>
+                                <option value="Wizard">Wizard</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="character-subclass-input">Subclass</label>
+                            <select id="character-subclass-input">
+                                <option value="">Select Class first...</option>
+                            </select>
                         </div>
                     </div>
 
@@ -1565,17 +1604,6 @@
                         <div class="form-group">
                             <label for="character-level-input">Level</label>
                             <input type="number" id="character-level-input" min="1" max="20" value="1">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="character-hp-current">Current HP</label>
-                            <input type="number" id="character-hp-current" min="0" value="10">
-                        </div>
-                        <div class="form-group">
-                            <label for="character-hp-max">Max HP</label>
-                            <input type="number" id="character-hp-max" min="1" value="10">
                         </div>
                         <div class="form-group">
                             <label for="character-ac-input">AC</label>
