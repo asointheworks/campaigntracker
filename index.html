@@ -255,11 +255,14 @@
                     <button class="tab-btn active" data-tab="journals">
                         <span class="tab-icon">📔</span> IC Logs & Journals
                     </button>
-                    <button class="tab-btn" data-tab="evidence">
-                        <span class="tab-icon">🔍</span> Evidence & Documents
-                    </button>
                     <button class="tab-btn" data-tab="resources">
                         <span class="tab-icon">💰</span> Shared Resources
+                    </button>
+                    <button class="tab-btn" data-tab="relationships">
+                        <span class="tab-icon">💬</span> Relationship Snippets
+                    </button>
+                    <button class="tab-btn" data-tab="backgrounds">
+                        <span class="tab-icon">📜</span> Background Stories
                     </button>
                     <button class="tab-btn" data-tab="misc">
                         <span class="tab-icon">📦</span> Other
@@ -273,16 +276,6 @@
                     </div>
                     <div class="tales-grid" id="journals-grid">
                         <!-- Journals rendered dynamically -->
-                    </div>
-                </div>
-
-                <!-- Evidence & Documents Tab -->
-                <div class="tab-content" id="evidence">
-                    <div class="notes-toolbar">
-                        <button class="btn btn-primary" onclick="openTaleModal('evidence')">+ Add Evidence</button>
-                    </div>
-                    <div class="evidence-list" id="evidence-list">
-                        <!-- Evidence rendered dynamically -->
                     </div>
                 </div>
 
@@ -327,6 +320,26 @@
                                 <p><em>No notable contacts yet</em></p>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Relationship Snippets Tab -->
+                <div class="tab-content" id="relationships">
+                    <div class="notes-toolbar">
+                        <button class="btn btn-primary" onclick="openTaleModal('relationship')">+ Add Snippet</button>
+                    </div>
+                    <div class="tales-grid" id="relationships-grid">
+                        <!-- Relationship snippets rendered dynamically -->
+                    </div>
+                </div>
+
+                <!-- Background Stories Tab -->
+                <div class="tab-content" id="backgrounds">
+                    <div class="notes-toolbar">
+                        <button class="btn btn-primary" onclick="openTaleModal('background')">+ Add Background Story</button>
+                    </div>
+                    <div class="tales-grid" id="backgrounds-grid">
+                        <!-- Background stories rendered dynamically -->
                     </div>
                 </div>
 
@@ -1151,7 +1164,8 @@
                         <label for="tale-type-select">Type</label>
                         <select id="tale-type-select">
                             <option value="journal">IC Log / Journal Entry</option>
-                            <option value="evidence">Evidence / Document</option>
+                            <option value="relationship">Relationship Snippet</option>
+                            <option value="background">Background Story</option>
                             <option value="misc">Other</option>
                         </select>
                     </div>
