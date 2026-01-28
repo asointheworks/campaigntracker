@@ -126,6 +126,8 @@ function startFirestoreListener() {
                     renderGallery();
                     renderStories();
                     renderRules();
+                    loadSessionInfo();
+                    loadSynopsis();
                     updateDashboardStats();
                     CampaignData.renderActivity();
                 } catch (e) {
@@ -1154,6 +1156,13 @@ function cancelEditSynopsis() {
     document.getElementById('synopsis-edit').classList.add('hidden');
 }
 
+function loadSynopsis() {
+    const data = CampaignData.get();
+    if (data.campaign && data.campaign.synopsis) {
+        document.getElementById('synopsis-display').innerHTML = data.campaign.synopsis;
+    }
+}
+
 // ===================================
 // Rules Editing
 // ===================================
@@ -1219,10 +1228,12 @@ function cancelEditRules(ruleId) {
 
 function saveSessionInfo() {
     const date = document.getElementById('next-session-date').value;
+    const location = document.getElementById('next-session-location').value;
     const notes = document.getElementById('session-notes').value;
 
     const data = CampaignData.get();
     data.campaign.nextSessionDate = date;
+    data.campaign.nextSessionLocation = location;
     data.campaign.sessionNotes = notes;
     CampaignData.save(data);
 
@@ -1234,6 +1245,9 @@ function loadSessionInfo() {
 
     if (data.campaign.nextSessionDate) {
         document.getElementById('next-session-date').value = data.campaign.nextSessionDate;
+    }
+    if (data.campaign.nextSessionLocation) {
+        document.getElementById('next-session-location').value = data.campaign.nextSessionLocation;
     }
     if (data.campaign.sessionNotes) {
         document.getElementById('session-notes').value = data.campaign.sessionNotes;
@@ -2811,8 +2825,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize import zone
     initImportZone();
 
-    // Load session info
+    // Load session info and synopsis
     loadSessionInfo();
+    loadSynopsis();
 
     // Update dashboard
     updateDashboardStats();
@@ -2847,6 +2862,7 @@ window.removeFile = removeFile;
 window.toggleEditSynopsis = toggleEditSynopsis;
 window.saveSynopsis = saveSynopsis;
 window.cancelEditSynopsis = cancelEditSynopsis;
+window.loadSynopsis = loadSynopsis;
 window.toggleEditRules = toggleEditRules;
 window.saveRules = saveRules;
 window.cancelEditRules = cancelEditRules;
