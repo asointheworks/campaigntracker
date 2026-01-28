@@ -213,9 +213,11 @@ a:hover {
    =================================== */
 
 .main-content {
+    width: 100%;
     max-width: 100%;
     margin: 0 auto;
     padding: var(--spacing-xl);
+    box-sizing: border-box;
 }
 
 .content-section {
