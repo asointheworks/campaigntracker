@@ -1543,6 +1543,7 @@ function initCharacterForm() {
         }
         renderCharacters();
         loadPCsForInitiative(); // Refresh initiative tracker PC list
+        loadNPCsForInitiative(); // Refresh initiative tracker NPC list
         closeModal('character-modal');
     });
 }
@@ -1559,6 +1560,7 @@ function deleteCharacter() {
         CampaignData.addActivity('🗑️', `Deleted character: "${character?.name}"`);
         renderCharacters();
         loadPCsForInitiative(); // Refresh initiative tracker PC list
+        loadNPCsForInitiative(); // Refresh initiative tracker NPC list
         closeModal('character-modal');
     }
 }
@@ -2048,7 +2050,8 @@ function loadPCsForInitiative() {
     const pcSelection = document.getElementById('pc-selection');
     if (!pcSelection) return;
 
-    const pcs = data.characters.filter(c => c.type === 'pc');
+    // Filter PCs that are not deceased
+    const pcs = data.characters.filter(c => c.type === 'pc' && !c.deceased);
 
     if (pcs.length === 0) {
         pcSelection.innerHTML = '<p class="initiative-empty" style="padding: 1rem;">No PCs found. Add Player Characters in the Party tab.</p>';
@@ -2076,6 +2079,62 @@ function loadPCsForInitiative() {
     }).join('');
 }
 
+function loadNPCsForInitiative() {
+    const data = CampaignData.get();
+    const npcSelection = document.getElementById('npc-selection');
+    if (!npcSelection) return;
+
+    // Filter NPCs that are not deceased
+    const npcs = data.characters.filter(c => c.type === 'npc' && !c.deceased);
+
+    if (npcs.length === 0) {
+        npcSelection.innerHTML = '<p class="initiative-empty" style="padding: 1rem;">No NPCs found. Add NPCs in the Characters tab or use the quick-add form below.</p>';
+        return;
+    }
+
+    // Get active NPCs from encounter data
+    const activeNPCs = data.encounter?.activeNPCs || [];
+
+    npcSelection.innerHTML = npcs.map(npc => {
+        const isActive = activeNPCs.includes(npc.id);
+        return `
+            <label class="pc-toggle ${isActive ? 'active' : 'inactive'}">
+                <input type="checkbox" class="pc-toggle-checkbox"
+                       data-npc-id="${npc.id}"
+                       ${isActive ? 'checked' : ''}
+                       onchange="toggleNPCInEncounter(${npc.id})">
+                <div class="pc-toggle-info">
+                    <div class="pc-toggle-name">${npc.name}</div>
+                    <div class="pc-toggle-class">${npc.raceClass || 'NPC'}</div>
+                </div>
+                <div class="pc-toggle-init">${npc.initiative || '+0'}</div>
+            </label>
+        `;
+    }).join('');
+}
+
+function toggleNPCInEncounter(npcId) {
+    const data = CampaignData.get();
+    if (!data.encounter) data.encounter = { combatants: [], round: 1, currentTurn: 0, activePCs: [], activeNPCs: [] };
+
+    if (!data.encounter.activeNPCs) {
+        data.encounter.activeNPCs = [];
+    }
+
+    const index = data.encounter.activeNPCs.indexOf(npcId);
+    if (index > -1) {
+        data.encounter.activeNPCs.splice(index, 1);
+        // Remove from combatants if present
+        data.encounter.combatants = data.encounter.combatants.filter(c => c.npcId !== npcId);
+    } else {
+        data.encounter.activeNPCs.push(npcId);
+    }
+
+    CampaignData.save(data);
+    loadNPCsForInitiative();
+    renderInitiativeList();
+}
+
 function togglePCInEncounter(pcId) {
     const data = CampaignData.get();
     if (!data.encounter) data.encounter = { combatants: [], round: 1, currentTurn: 0, activePCs: [] };
@@ -2101,15 +2160,15 @@ function togglePCInEncounter(pcId) {
 
 function startNewEncounter() {
     const data = CampaignData.get();
-    if (!data.encounter) data.encounter = { combatants: [], round: 1, currentTurn: 0, activePCs: [] };
+    if (!data.encounter) data.encounter = { combatants: [], round: 1, currentTurn: 0, activePCs: [], activeNPCs: [] };
 
     // Reset encounter
     data.encounter.combatants = [];
     data.encounter.round = 1;
     data.encounter.currentTurn = 0;
 
-    // Add active PCs to combatants
-    const pcs = data.characters.filter(c => c.type === 'pc');
+    // Add active PCs to combatants (exclude deceased)
+    const pcs = data.characters.filter(c => c.type === 'pc' && !c.deceased);
     const activePCs = data.encounter.activePCs || pcs.map(pc => pc.id);
 
     pcs.filter(pc => activePCs.includes(pc.id)).forEach(pc => {
@@ -2120,11 +2179,35 @@ function startNewEncounter() {
             name: pc.name,
             type: 'pc',
             raceClass: pc.raceClass,
-            initiative: 0, // To be rolled
+            initiative: null, // To be entered
             currentHp: pc.currentHp,
             maxHp: pc.maxHp,
             ac: pc.ac,
             initMod: initMod
+        });
+    });
+
+    // Add active NPCs to combatants (exclude deceased)
+    const npcs = data.characters.filter(c => c.type === 'npc' && !c.deceased);
+    const activeNPCs = data.encounter.activeNPCs || [];
+
+    npcs.filter(npc => activeNPCs.includes(npc.id)).forEach(npc => {
+        const initMod = parseInt(npc.initiative) || 0;
+        data.encounter.combatants.push({
+            id: Date.now() + Math.random(),
+            npcId: npc.id,
+            name: npc.name,
+            type: 'npc',
+            raceClass: npc.raceClass || '',
+            initiative: null, // To be entered
+            currentHp: npc.currentHp || 10,
+            maxHp: npc.maxHp || 10,
+            ac: npc.ac || 10,
+            initMod: initMod,
+            saves: npc.saves || '',
+            skills: npc.skills || '',
+            spells: npc.spells || '',
+            notes: npc.notes || ''
         });
     });
 
@@ -2190,10 +2273,24 @@ function renderInitiativeList() {
         if (hpPercent <= 25) hpClass = 'hp-critical';
         else if (hpPercent <= 50) hpClass = 'hp-warning';
 
+        // Display initiative value - show '?' only if null/undefined, otherwise show the number (including 0)
+        const initDisplay = combatant.initiative !== null && combatant.initiative !== undefined
+            ? combatant.initiative
+            : '';
+        const initPlaceholder = combatant.initiative === null || combatant.initiative === undefined ? '?' : '';
+
         return `
             <div class="initiative-item ${isActive ? 'active-turn' : ''} is-${combatant.type} ${isDead ? 'is-dead' : ''}"
                  onclick="selectCombatant('${combatant.id}')">
-                <div class="init-order">${combatant.initiative || '?'}</div>
+                <div class="init-order">
+                    <input type="number"
+                           class="init-input"
+                           value="${initDisplay}"
+                           placeholder="${initPlaceholder}"
+                           onclick="event.stopPropagation()"
+                           onchange="updateCombatantInitiative('${combatant.id}', this.value)"
+                           onkeydown="if(event.key === 'Enter') { this.blur(); }">
+                </div>
                 <div class="init-info">
                     <div class="init-name">
                         ${combatant.name}
@@ -2216,6 +2313,24 @@ function renderInitiativeList() {
     }).join('');
 }
 
+function updateCombatantInitiative(combatantId, value) {
+    const data = CampaignData.get();
+    const combatant = data.encounter?.combatants.find(c => c.id == combatantId);
+    if (!combatant) return;
+
+    // Parse the value - allow 0 as a valid initiative
+    const initValue = value === '' ? null : parseInt(value);
+    combatant.initiative = isNaN(initValue) ? null : initValue;
+
+    CampaignData.save(data);
+
+    // Update the details panel if this combatant is selected
+    if (selectedCombatantId == combatantId) {
+        const initDisplay = combatant.initiative !== null ? combatant.initiative : '-';
+        document.getElementById('detail-init').textContent = initDisplay;
+    }
+}
+
 function selectCombatant(combatantId) {
     const data = CampaignData.get();
     const combatant = data.encounter?.combatants.find(c => c.id == combatantId);
@@ -2226,7 +2341,11 @@ function selectCombatant(combatantId) {
     document.getElementById('detail-name').textContent = combatant.name;
     document.getElementById('detail-hp').textContent = `${combatant.currentHp}/${combatant.maxHp}`;
     document.getElementById('detail-ac').textContent = combatant.ac;
-    document.getElementById('detail-init').textContent = combatant.initiative;
+    // Show initiative value properly - display '-' only if null/undefined, otherwise show the number
+    const initDisplay = combatant.initiative !== null && combatant.initiative !== undefined
+        ? combatant.initiative
+        : '-';
+    document.getElementById('detail-init').textContent = initDisplay;
     document.getElementById('detail-saves').textContent = combatant.saves || '-';
     document.getElementById('detail-skills').textContent = combatant.skills || '-';
     document.getElementById('detail-spells').textContent = combatant.spells || '-';
@@ -2269,7 +2388,12 @@ function sortByInitiative() {
     const data = CampaignData.get();
     if (!data.encounter?.combatants) return;
 
-    data.encounter.combatants.sort((a, b) => (b.initiative || 0) - (a.initiative || 0));
+    // Sort by initiative value, placing null/undefined values at the end
+    data.encounter.combatants.sort((a, b) => {
+        const aInit = a.initiative !== null && a.initiative !== undefined ? a.initiative : -Infinity;
+        const bInit = b.initiative !== null && b.initiative !== undefined ? b.initiative : -Infinity;
+        return bInit - aInit;
+    });
     data.encounter.currentTurn = 0;
     CampaignData.save(data);
     renderInitiativeList();
@@ -2877,6 +3001,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderGallery();
     renderRules();
     loadPCsForInitiative();
+    loadNPCsForInitiative();
     renderInitiativeList();
 
     // Initialize import zone
