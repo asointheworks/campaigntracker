@@ -121,8 +121,18 @@
                     </div>
                     <div class="card-content">
                         <div class="session-info">
-                            <input type="datetime-local" id="next-session-date" class="session-date-input">
-                            <textarea id="session-notes" placeholder="Session prep notes..." class="session-notes"></textarea>
+                            <div class="session-field">
+                                <label for="next-session-date">Date & Time</label>
+                                <input type="datetime-local" id="next-session-date" class="session-date-input">
+                            </div>
+                            <div class="session-field">
+                                <label for="next-session-location">Location</label>
+                                <input type="text" id="next-session-location" class="session-location-input" placeholder="Where will you play?">
+                            </div>
+                            <div class="session-field">
+                                <label for="session-notes">Session Prep & Details</label>
+                                <textarea id="session-notes" placeholder="Session prep notes, planned encounters, story beats..." class="session-notes"></textarea>
+                            </div>
                             <button class="btn btn-primary" onclick="saveSessionInfo()">Save</button>
                         </div>
                     </div>
