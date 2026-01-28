@@ -1472,6 +1472,7 @@ a:hover {
 
 .modal-body {
     padding: var(--spacing-xl);
+    color: var(--parchment);
 }
 
 /* Forms */
@@ -1526,15 +1527,23 @@ a:hover {
     margin-bottom: var(--spacing-lg);
     padding-bottom: var(--spacing-lg);
     border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+    color: var(--parchment);
 }
 
 .story-view-content {
     line-height: 1.8;
     font-size: 1.05rem;
+    color: var(--parchment);
 }
 
 .story-view-content p {
     margin-bottom: var(--spacing-md);
+}
+
+/* Ensure all text in story content is readable regardless of pasted inline styles */
+.story-view-content,
+.story-view-content * {
+    color: var(--parchment) !important;
 }
 
 /* Lightbox */
