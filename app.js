@@ -1233,6 +1233,11 @@ function toggleSessionEdit() {
     const display = document.getElementById('session-display');
     const edit = document.getElementById('session-edit');
 
+    if (!display || !edit) {
+        console.error('Session display/edit elements not found');
+        return;
+    }
+
     if (display.classList.contains('hidden')) {
         // Switch to display mode
         display.classList.remove('hidden');
