@@ -112,7 +112,27 @@ function startFirestoreListener() {
             const charactersChanged = JSON.stringify(remoteData.characters) !== JSON.stringify(localData.characters);
             const activityChanged = remoteLatest !== localLatest;
 
-            if (activityChanged || campaignChanged || charactersChanged) {
+            // Compare all deletable data structures to ensure deletions sync properly
+            const talesChanged = JSON.stringify(remoteData.tales) !== JSON.stringify(localData.tales);
+            const sessionSummariesChanged = JSON.stringify(remoteData.sessionSummaries) !== JSON.stringify(localData.sessionSummaries);
+            const dmNotesChanged = JSON.stringify(remoteData.dmNotes) !== JSON.stringify(localData.dmNotes);
+            const icNotesChanged = JSON.stringify(remoteData.icNotes) !== JSON.stringify(localData.icNotes);
+            const oocNotesChanged = JSON.stringify(remoteData.oocNotes) !== JSON.stringify(localData.oocNotes);
+            const encounterChanged = JSON.stringify(remoteData.encounter) !== JSON.stringify(localData.encounter);
+
+            // Compare other data structures for completeness
+            const storiesChanged = JSON.stringify(remoteData.stories) !== JSON.stringify(localData.stories);
+            const npcsChanged = JSON.stringify(remoteData.npcs) !== JSON.stringify(localData.npcs);
+            const locationsChanged = JSON.stringify(remoteData.locations) !== JSON.stringify(localData.locations);
+            const questsChanged = JSON.stringify(remoteData.quests) !== JSON.stringify(localData.quests);
+            const galleryChanged = JSON.stringify(remoteData.gallery) !== JSON.stringify(localData.gallery);
+            const resourcesChanged = JSON.stringify(remoteData.resources) !== JSON.stringify(localData.resources);
+
+            if (activityChanged || campaignChanged || charactersChanged ||
+                talesChanged || sessionSummariesChanged || dmNotesChanged ||
+                icNotesChanged || oocNotesChanged || encounterChanged ||
+                storiesChanged || npcsChanged || locationsChanged ||
+                questsChanged || galleryChanged || resourcesChanged) {
                 // Remote is different - update local
                 _firestoreUpdateInProgress = true;
                 localStorage.setItem('campaignTrackerData', JSON.stringify(remoteData));
