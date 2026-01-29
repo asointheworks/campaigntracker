@@ -1255,7 +1255,7 @@ function formatEuropeanDate(date) {
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = String(d.getFullYear()).slice(-2);
-    return `${day}-${month}-${year}`;
+    return `${day}/${month}/${year}`;
 }
 
 // Helper function to format date and time as DD-MM-YY HH:MM (European format)
@@ -1276,6 +1276,31 @@ function formatSessionDateTime(dateTimeString) {
 
     return `${dayName}, ${formatEuropeanDateTime(date)}`;
 }
+
+function updateSessionDateDisplayInput() {
+    const dateInput = document.getElementById('next-session-date');
+    const displayInput = document.getElementById('next-session-date-display-input');
+    if (dateInput.value) {
+        const date = new Date(dateInput.value);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        displayInput.value = `${day}/${month}/${year}, ${hours}:${minutes}`;
+    } else {
+        displayInput.value = '';
+    }
+}
+
+// Attach change listener once DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('next-session-date');
+    if (dateInput) {
+        dateInput.addEventListener('change', updateSessionDateDisplayInput);
+        dateInput.addEventListener('input', updateSessionDateDisplayInput);
+    }
+});
 
 function updateSessionDisplay() {
     const data = CampaignData.get();
@@ -1312,6 +1337,7 @@ function loadSessionInfo() {
 
     if (data.campaign.nextSessionDate) {
         document.getElementById('next-session-date').value = data.campaign.nextSessionDate;
+        updateSessionDateDisplayInput();
     }
     if (data.campaign.nextSessionLocation) {
         document.getElementById('next-session-location').value = data.campaign.nextSessionLocation;
