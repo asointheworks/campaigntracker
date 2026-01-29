@@ -107,7 +107,12 @@ function startFirestoreListener() {
             const remoteLatest = (remoteData.activity && remoteData.activity[0]) ? remoteData.activity[0].id : 0;
             const localLatest = (localData.activity && localData.activity[0]) ? localData.activity[0].id : 0;
 
-            if (remoteLatest !== localLatest || JSON.stringify(remoteData.campaign) !== JSON.stringify(localData.campaign)) {
+            // Compare campaign, characters, and other key data structures
+            const campaignChanged = JSON.stringify(remoteData.campaign) !== JSON.stringify(localData.campaign);
+            const charactersChanged = JSON.stringify(remoteData.characters) !== JSON.stringify(localData.characters);
+            const activityChanged = remoteLatest !== localLatest;
+
+            if (activityChanged || campaignChanged || charactersChanged) {
                 // Remote is different - update local
                 _firestoreUpdateInProgress = true;
                 localStorage.setItem('campaignTrackerData', JSON.stringify(remoteData));
@@ -1534,6 +1539,61 @@ function resetPortraitState() {
     switchPortraitTab('url');
 }
 
+function validateCharacterData(characterData) {
+    // Validate required fields
+    if (!characterData.name || characterData.name.trim() === '') {
+        alert('Character name is required.');
+        return false;
+    }
+
+    if (!characterData.type || (characterData.type !== 'pc' && characterData.type !== 'npc')) {
+        alert('Character type must be either PC or NPC.');
+        return false;
+    }
+
+    // Validate numeric fields
+    if (typeof characterData.level !== 'number' || characterData.level < 1 || characterData.level > 20) {
+        alert('Character level must be between 1 and 20.');
+        return false;
+    }
+
+    if (typeof characterData.ac !== 'number' || characterData.ac < 0) {
+        alert('Character AC must be a positive number.');
+        return false;
+    }
+
+    // Validate initiative format (should be like +3, -1, etc.)
+    if (!characterData.initiative || !/^[+-]?\d+$/.test(characterData.initiative)) {
+        alert('Character initiative must be a number with optional +/- sign (e.g., +3, -1, 0).');
+        return false;
+    }
+
+    // Ensure all required fields exist
+    if (!characterData.id || !characterData.raceClass || characterData.portrait === undefined) {
+        alert('Some required character fields are missing. Please try again.');
+        return false;
+    }
+
+    return true;
+}
+
+function sanitizeCharacterData(characterData) {
+    // Trim string fields and ensure they exist
+    return {
+        ...characterData,
+        name: (characterData.name || '').trim(),
+        species: (characterData.species || '').trim(),
+        charClass: (characterData.charClass || '').trim(),
+        subclass: (characterData.subclass || '').trim(),
+        player: (characterData.player || '').trim(),
+        raceClass: (characterData.raceClass || '').trim(),
+        background: characterData.background || '',
+        deceased: Boolean(characterData.deceased),
+        level: parseInt(characterData.level) || 1,
+        ac: parseInt(characterData.ac) || 10
+    };
+}
+
 function initCharacterForm() {
     const form = document.getElementById('character-form');
     form.addEventListener('submit', (e) => {
@@ -1545,7 +1605,7 @@ function initCharacterForm() {
         const subclass = document.getElementById('character-subclass-input').value;
         const raceClass = [species, subclass ? `${charClass} (${subclass})` : charClass].filter(Boolean).join(' ');
 
-        const characterData = {
+        let characterData = {
             id: currentEditingCharacterId || Date.now(),
             type: document.getElementById('character-type-input').value,
             name: document.getElementById('character-name-input').value,
@@ -1562,6 +1622,13 @@ function initCharacterForm() {
             background: backgroundEditor.innerHTML,
             createdAt: currentEditingCharacterId ? undefined : new Date().toISOString()
         };
+
+        // Sanitize and validate character data
+        characterData = sanitizeCharacterData(characterData);
+
+        if (!validateCharacterData(characterData)) {
+            return; // Stop submission if validation fails
+        }
 
         const data = CampaignData.get();
 
@@ -1608,58 +1675,123 @@ function getDefaultPortrait(type) {
     return D20_PLACEHOLDER;
 }
 
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, (m) => map[m]);
+}
+
 function renderCharacters(filter = 'all') {
     const grid = document.getElementById('party-grid');
-    const data = CampaignData.get();
 
-    let characters = data.characters;
+    try {
+        const data = CampaignData.get();
 
-    // Apply filter
-    if (filter !== 'all') {
-        characters = characters.filter(c => c.type === filter);
-    }
+        if (!data || !Array.isArray(data.characters)) {
+            console.error('Invalid data structure: characters array not found');
+            grid.innerHTML = '<div class="party-empty-state"><p>Error loading characters. Please refresh the page.</p></div>';
+            return;
+        }
 
-    if (characters.length === 0) {
-        grid.innerHTML = `
-            <div class="party-empty-state">
-                <div class="empty-icon">⚔️</div>
-                <h3>No Characters Yet</h3>
-                <p>Add your first character to get started!</p>
-                <button class="btn btn-primary" onclick="openCharacterModal()">+ Add Character</button>
-            </div>
-        `;
-        return;
-    }
+        let characters = data.characters;
 
-    grid.innerHTML = characters.map(char => {
-        return `
-            <div class="character-card${char.deceased ? ' deceased' : ''}" data-character-id="${char.id}" data-type="${char.type}">
-                <span class="character-type-badge ${char.type}">${char.type.toUpperCase()}</span>
-                <div class="character-portrait">
-                    <img src="${char.portrait || getDefaultPortrait(char.type)}" alt="${char.name}" class="portrait-img" onerror="this.src='${getDefaultPortrait(char.type)}'">
-                    <div class="level-badge">Lvl ${char.level}</div>
+        // Apply filter
+        if (filter !== 'all') {
+            characters = characters.filter(c => c && c.type === filter);
+        }
+
+        if (characters.length === 0) {
+            grid.innerHTML = `
+                <div class="party-empty-state">
+                    <div class="empty-icon">⚔️</div>
+                    <h3>No Characters Yet</h3>
+                    <p>Add your first character to get started!</p>
+                    <button class="btn btn-primary" onclick="openCharacterModal()">+ Add Character</button>
                 </div>
-                <div class="character-info">
-                    <h3 class="char-name">${char.name}${char.deceased ? ' <span class="deceased-tag">Deceased</span>' : ''}</h3>
-                    <p class="char-race-class">${char.raceClass}</p>
-                    ${char.player ? `<p class="char-player">${char.type === 'pc' ? 'Player' : 'Controlled by'}: ${char.player}</p>` : ''}
-                    <div class="char-stats">
-                        <div class="stat-row">
-                            <span class="mini-stat">AC: ${char.ac}</span>
-                            <span class="mini-stat">Init: ${char.initiative}</span>
+            `;
+            return;
+        }
+
+        const renderedCharacters = [];
+
+        characters.forEach((char, index) => {
+            try {
+                // Validate character has required fields
+                if (!char || !char.id) {
+                    console.warn(`Character at index ${index} is missing required fields:`, char);
+                    return;
+                }
+
+                // Provide defaults for missing fields
+                const safeChar = {
+                    id: char.id,
+                    type: char.type || 'npc',
+                    name: char.name || 'Unknown Character',
+                    raceClass: char.raceClass || 'Unknown',
+                    player: char.player || '',
+                    level: char.level || 1,
+                    ac: char.ac || 10,
+                    initiative: char.initiative || '+0',
+                    deceased: Boolean(char.deceased),
+                    portrait: char.portrait || getDefaultPortrait(char.type || 'npc'),
+                    background: char.background || ''
+                };
+
+                // Escape HTML in user-provided fields to prevent injection
+                const safeName = escapeHtml(safeChar.name);
+                const safePlayer = escapeHtml(safeChar.player);
+                const safeRaceClass = escapeHtml(safeChar.raceClass);
+                const safeType = escapeHtml(safeChar.type);
+
+                renderedCharacters.push(`
+                    <div class="character-card${safeChar.deceased ? ' deceased' : ''}" data-character-id="${safeChar.id}" data-type="${safeType}">
+                        <span class="character-type-badge ${safeType}">${safeType.toUpperCase()}</span>
+                        <div class="character-portrait">
+                            <img src="${escapeHtml(safeChar.portrait)}" alt="${safeName}" class="portrait-img" onerror="this.src='${getDefaultPortrait(safeChar.type)}'">
+                            <div class="level-badge">Lvl ${safeChar.level}</div>
+                        </div>
+                        <div class="character-info">
+                            <h3 class="char-name">${safeName}${safeChar.deceased ? ' <span class="deceased-tag">Deceased</span>' : ''}</h3>
+                            <p class="char-race-class">${safeRaceClass}</p>
+                            ${safePlayer ? `<p class="char-player">${safeType === 'pc' ? 'Player' : 'Controlled by'}: ${safePlayer}</p>` : ''}
+                            <div class="char-stats">
+                                <div class="stat-row">
+                                    <span class="mini-stat">AC: ${safeChar.ac}</span>
+                                    <span class="mini-stat">Init: ${escapeHtml(safeChar.initiative)}</span>
+                                </div>
+                            </div>
+                            <div class="char-background">
+                                <p class="background-text">${escapeHtml(stripHtml(safeChar.background)).substring(0, 150)}${safeChar.background && safeChar.background.length > 150 ? '...' : ''}</p>
+                            </div>
+                        </div>
+                        <div class="char-actions">
+                            <button class="btn btn-small" onclick="viewCharacter(${safeChar.id})">View</button>
+                            <button class="btn btn-small" onclick="openCharacterModal(${safeChar.id})">Edit</button>
                         </div>
                     </div>
-                    <div class="char-background">
-                        <p class="background-text">${stripHtml(char.background).substring(0, 150)}${char.background && char.background.length > 150 ? '...' : ''}</p>
-                    </div>
-                </div>
-                <div class="char-actions">
-                    <button class="btn btn-small" onclick="viewCharacter(${char.id})">View</button>
-                    <button class="btn btn-small" onclick="openCharacterModal(${char.id})">Edit</button>
-                </div>
-            </div>
-        `;
-    }).join('');
+                `);
+            } catch (charError) {
+                console.error(`Error rendering character at index ${index}:`, char, charError);
+                // Skip this character but continue rendering others
+            }
+        });
+
+        grid.innerHTML = renderedCharacters.join('');
+
+        if (renderedCharacters.length === 0 && characters.length > 0) {
+            console.error('All characters failed to render. Check console for details.');
+            grid.innerHTML = '<div class="party-empty-state"><p>Error rendering characters. Please check the console for details.</p></div>';
+        }
+
+    } catch (error) {
+        console.error('Critical error in renderCharacters:', error);
+        grid.innerHTML = '<div class="party-empty-state"><p>Critical error loading characters. Please refresh the page.</p></div>';
+    }
 }
 
 function stripHtml(html) {
