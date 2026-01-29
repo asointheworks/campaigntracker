@@ -15,7 +15,7 @@ const D20_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000
 
 let db = null;
 let firebaseReady = false;
-let _firestoreUpdateInProgress = false; // prevents save loops
+// Removed _firestoreUpdateInProgress flag - now using Firestore metadata (hasPendingWrites) to prevent loops
 
 try {
     const firebaseConfig = {
@@ -96,12 +96,14 @@ function startFirestoreListener() {
                 return;
             }
 
+            // Skip processing if this snapshot is from a local write that hasn't been confirmed yet
+            // This prevents the listener from overwriting local changes before they're synced
+            if (doc.metadata.hasPendingWrites) {
+                return;
+            }
+
             const remoteData = doc.data();
             const localData = CampaignData.get();
-
-            // Only update if the remote data is actually different
-            // Use a simple timestamp comparison to avoid infinite loops
-            if (_firestoreUpdateInProgress) return;
 
             // Check if remote has newer activity (simple heuristic)
             const remoteLatest = (remoteData.activity && remoteData.activity[0]) ? remoteData.activity[0].id : 0;
@@ -114,7 +116,6 @@ function startFirestoreListener() {
 
             if (activityChanged || campaignChanged || charactersChanged) {
                 // Remote is different - update local
-                _firestoreUpdateInProgress = true;
                 localStorage.setItem('campaignTrackerData', JSON.stringify(remoteData));
 
                 // Re-render everything
@@ -138,7 +139,6 @@ function startFirestoreListener() {
                 } catch (e) {
                     console.warn('Re-render error during sync:', e);
                 }
-                _firestoreUpdateInProgress = false;
             }
 
             setSyncStatus('connected');
@@ -369,10 +369,8 @@ const CampaignData = {
     save(data) {
         try {
             localStorage.setItem('campaignTrackerData', JSON.stringify(data));
-            // Sync to Firestore if not currently receiving a Firestore update
-            if (!_firestoreUpdateInProgress) {
-                syncToFirestore(data);
-            }
+            // Always sync to Firestore - let the listener use metadata to detect source
+            syncToFirestore(data);
             return true;
         } catch (e) {
             console.error('Error saving data:', e);
