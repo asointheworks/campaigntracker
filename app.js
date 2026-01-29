@@ -15,7 +15,9 @@ const D20_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000
 
 let db = null;
 let firebaseReady = false;
-// Removed _firestoreUpdateInProgress flag - now using Firestore metadata (hasPendingWrites) to prevent loops
+// Flag to prevent listener from processing during local save operations
+let _localSaveInProgress = false;
+let _localSaveTimeout = null;
 
 try {
     const firebaseConfig = {
@@ -99,6 +101,12 @@ function startFirestoreListener() {
             // Skip processing if this snapshot is from a local write that hasn't been confirmed yet
             // This prevents the listener from overwriting local changes before they're synced
             if (doc.metadata.hasPendingWrites) {
+                return;
+            }
+
+            // Skip processing if we're currently in the middle of a local save operation
+            // This prevents race conditions when multiple saves happen in quick succession
+            if (_localSaveInProgress) {
                 return;
             }
 
@@ -388,12 +396,22 @@ const CampaignData = {
     // Save data to localStorage + Firestore
     save(data) {
         try {
+            // Set flag to prevent listener from overwriting during save
+            _localSaveInProgress = true;
+            if (_localSaveTimeout) clearTimeout(_localSaveTimeout);
+
             localStorage.setItem('campaignTrackerData', JSON.stringify(data));
-            // Always sync to Firestore - let the listener use metadata to detect source
             syncToFirestore(data);
+
+            // Clear flag after a short delay to allow Firestore write to complete
+            _localSaveTimeout = setTimeout(() => {
+                _localSaveInProgress = false;
+            }, 1000);
+
             return true;
         } catch (e) {
             console.error('Error saving data:', e);
+            _localSaveInProgress = false;
             return false;
         }
     },
@@ -1492,6 +1510,7 @@ function viewCharacter(characterId) {
 
 // Portrait upload handling
 let _portraitDataUrl = null;
+let _portraitUploadInitialized = false;
 
 function switchPortraitTab(tab) {
     document.querySelectorAll('.portrait-tab').forEach(t => t.classList.remove('active'));
@@ -1526,6 +1545,9 @@ function clearPortraitUpload() {
 }
 
 function initPortraitUpload() {
+    // Only initialize once to avoid duplicate event listeners
+    if (_portraitUploadInitialized) return;
+
     const zone = document.getElementById('portrait-upload-zone');
     const fileInput = document.getElementById('portrait-file-input');
     if (!zone || !fileInput) return;
@@ -1541,6 +1563,8 @@ function initPortraitUpload() {
     fileInput.addEventListener('change', (e) => {
         if (e.target.files.length) handlePortraitFile(e.target.files[0]);
     });
+
+    _portraitUploadInitialized = true;
 }
 
 function getPortraitValue() {
@@ -3170,6 +3194,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initQuestForm();
     initImageForm();
     initCharacterForm();
+    initPortraitUpload();
     initCampaignForm();
     initResourceForm();
     initSessionSummaryForm();
