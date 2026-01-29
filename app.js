@@ -1405,7 +1405,7 @@ function formatText(command, value = null) {
 
 let currentEditingCharacterId = null;
 
-function openCharacterModal(characterId = null) {
+async function openCharacterModal(characterId = null) {
     const form = document.getElementById('character-form');
     const title = document.getElementById('character-modal-title');
     const deleteBtn = document.getElementById('delete-character-btn');
@@ -1446,7 +1446,23 @@ function openCharacterModal(characterId = null) {
             document.getElementById('character-init-input').value = character.initiative || '+0';
             document.getElementById('character-deceased-input').checked = !!character.deceased;
             resetPortraitState();
-            if (character.portrait && character.portrait.startsWith('data:')) {
+
+            // Load portrait from IndexedDB if needed
+            if (character.portrait && character.portrait.startsWith('indexeddb:')) {
+                try {
+                    const portraitId = character.portrait.replace('indexeddb:', '');
+                    const file = await FileStore.getFile(portraitId);
+                    if (file && file.data) {
+                        _portraitDataUrl = file.data;
+                        document.getElementById('portrait-preview-img').src = file.data;
+                        document.getElementById('portrait-preview').style.display = 'flex';
+                        document.getElementById('character-portrait-input').value = '';
+                    }
+                } catch (e) {
+                    console.error('Failed to load portrait from IndexedDB:', e);
+                    document.getElementById('character-portrait-input').value = character.portrait || '';
+                }
+            } else if (character.portrait && character.portrait.startsWith('data:')) {
                 _portraitDataUrl = character.portrait;
                 document.getElementById('portrait-preview-img').src = character.portrait;
                 document.getElementById('portrait-preview').style.display = 'flex';
@@ -1524,10 +1540,10 @@ function switchPortraitTab(tab) {
     }
 }
 
-function handlePortraitFile(file) {
+async function handlePortraitFile(file) {
     if (!file || !file.type.startsWith('image/')) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         _portraitDataUrl = e.target.result;
         document.getElementById('character-portrait-input').value = '';
         const preview = document.getElementById('portrait-preview');
@@ -1638,7 +1654,7 @@ function sanitizeCharacterData(characterData) {
 
 function initCharacterForm() {
     const form = document.getElementById('character-form');
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const backgroundEditor = document.getElementById('character-background-content');
@@ -1647,8 +1663,28 @@ function initCharacterForm() {
         const subclass = document.getElementById('character-subclass-input').value;
         const raceClass = [species, subclass ? `${charClass} (${subclass})` : charClass].filter(Boolean).join(' ');
 
+        const characterId = currentEditingCharacterId || Date.now();
+        let portraitValue = getPortraitValue() || getDefaultPortrait(document.getElementById('character-type-input').value);
+
+        // If portrait is a large data URL, store it in IndexedDB
+        if (portraitValue && portraitValue.startsWith('data:') && portraitValue.length > 50000) {
+            try {
+                const portraitId = `portrait_${characterId}`;
+                await FileStore.saveFile({
+                    id: portraitId,
+                    name: `${characterId}_portrait`,
+                    data: portraitValue,
+                    type: 'portrait'
+                });
+                portraitValue = `indexeddb:${portraitId}`;
+            } catch (e) {
+                console.error('Failed to store portrait in IndexedDB:', e);
+                // Fall back to storing inline if IndexedDB fails
+            }
+        }
+
         let characterData = {
-            id: currentEditingCharacterId || Date.now(),
+            id: characterId,
             type: document.getElementById('character-type-input').value,
             name: document.getElementById('character-name-input').value,
             raceClass: raceClass,
@@ -1660,7 +1696,7 @@ function initCharacterForm() {
             ac: parseInt(document.getElementById('character-ac-input').value) || 10,
             initiative: document.getElementById('character-init-input').value || '+0',
             deceased: document.getElementById('character-deceased-input').checked,
-            portrait: getPortraitValue() || getDefaultPortrait(document.getElementById('character-type-input').value),
+            portrait: portraitValue,
             background: backgroundEditor.innerHTML,
             createdAt: currentEditingCharacterId ? undefined : new Date().toISOString()
         };
@@ -1728,7 +1764,7 @@ function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, (m) => map[m]);
 }
 
-function renderCharacters(filter = 'all') {
+async function renderCharacters(filter = 'all') {
     const grid = document.getElementById('party-grid');
 
     try {
@@ -1761,12 +1797,39 @@ function renderCharacters(filter = 'all') {
 
         const renderedCharacters = [];
 
+        // Load all portraits from IndexedDB in parallel
+        const portraitPromises = characters.map(async (char) => {
+            if (char && char.portrait && char.portrait.startsWith('indexeddb:')) {
+                try {
+                    const portraitId = char.portrait.replace('indexeddb:', '');
+                    const file = await FileStore.getFile(portraitId);
+                    return { id: char.id, portrait: file && file.data ? file.data : getDefaultPortrait(char.type || 'npc') };
+                } catch (e) {
+                    console.error('Failed to load portrait from IndexedDB:', e);
+                    return { id: char.id, portrait: getDefaultPortrait(char.type || 'npc') };
+                }
+            }
+            return null;
+        });
+
+        const loadedPortraits = await Promise.all(portraitPromises);
+        const portraitMap = {};
+        loadedPortraits.forEach(p => {
+            if (p) portraitMap[p.id] = p.portrait;
+        });
+
         characters.forEach((char, index) => {
             try {
                 // Validate character has required fields
                 if (!char || !char.id) {
                     console.warn(`Character at index ${index} is missing required fields:`, char);
                     return;
+                }
+
+                // Use loaded portrait from IndexedDB if available
+                let portraitSrc = char.portrait || getDefaultPortrait(char.type || 'npc');
+                if (portraitMap[char.id]) {
+                    portraitSrc = portraitMap[char.id];
                 }
 
                 // Provide defaults for missing fields
@@ -1780,7 +1843,7 @@ function renderCharacters(filter = 'all') {
                     ac: char.ac || 10,
                     initiative: char.initiative || '+0',
                     deceased: Boolean(char.deceased),
-                    portrait: char.portrait || getDefaultPortrait(char.type || 'npc'),
+                    portrait: portraitSrc,
                     background: char.background || ''
                 };
 
