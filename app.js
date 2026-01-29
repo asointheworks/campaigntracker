@@ -1490,6 +1490,7 @@ function viewCharacter(characterId) {
 
 // Portrait upload handling
 let _portraitDataUrl = null;
+let _portraitUploadInitialized = false;
 
 function switchPortraitTab(tab) {
     document.querySelectorAll('.portrait-tab').forEach(t => t.classList.remove('active'));
@@ -1524,6 +1525,9 @@ function clearPortraitUpload() {
 }
 
 function initPortraitUpload() {
+    // Only initialize once to avoid duplicate event listeners
+    if (_portraitUploadInitialized) return;
+
     const zone = document.getElementById('portrait-upload-zone');
     const fileInput = document.getElementById('portrait-file-input');
     if (!zone || !fileInput) return;
@@ -1539,6 +1543,8 @@ function initPortraitUpload() {
     fileInput.addEventListener('change', (e) => {
         if (e.target.files.length) handlePortraitFile(e.target.files[0]);
     });
+
+    _portraitUploadInitialized = true;
 }
 
 function getPortraitValue() {
@@ -3168,6 +3174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initQuestForm();
     initImageForm();
     initCharacterForm();
+    initPortraitUpload();
     initCampaignForm();
     initResourceForm();
     initSessionSummaryForm();
