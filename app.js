@@ -428,7 +428,7 @@ const CampaignData = {
         if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
         if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
 
-        return date.toLocaleDateString();
+        return formatEuropeanDate(date);
     }
 };
 
@@ -647,7 +647,7 @@ function initStoryForm() {
             title: document.getElementById('story-title-input').value,
             type: document.getElementById('story-type-select').value,
             author: document.getElementById('story-author-input').value,
-            date: new Date().toLocaleDateString(),
+            date: formatEuropeanDate(new Date()),
             content: contentHtml,
             wordCount: contentText.split(/\s+/).filter(w => w.length > 0).length,
             createdAt: new Date().toISOString()
@@ -1249,19 +1249,32 @@ function toggleSessionEdit() {
     }
 }
 
+// Helper function to format date as DD-MM-YY (European format)
+function formatEuropeanDate(date) {
+    const d = date instanceof Date ? date : new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = String(d.getFullYear()).slice(-2);
+    return `${day}-${month}-${year}`;
+}
+
+// Helper function to format date and time as DD-MM-YY HH:MM (European format)
+function formatEuropeanDateTime(date) {
+    const d = date instanceof Date ? date : new Date(date);
+    const dateStr = formatEuropeanDate(d);
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${dateStr} ${hours}:${minutes}`;
+}
+
 function formatSessionDateTime(dateTimeString) {
     if (!dateTimeString) return 'Not scheduled';
 
     const date = new Date(dateTimeString);
-    const options = {
-        weekday: 'short',
-        month: '2-digit',
-        day: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    };
-    return date.toLocaleString('en-US', options);
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayName = days[date.getDay()];
+
+    return `${dayName}, ${formatEuropeanDateTime(date)}`;
 }
 
 function updateSessionDisplay() {
@@ -2794,7 +2807,7 @@ function showImportPreview(bundle) {
         <div class="import-summary">
             <h4>Import Preview</h4>
             <p><strong>Type:</strong> ${hasFullData ? 'Full Backup' : 'Player Data'}</p>
-            <p><strong>Exported:</strong> ${new Date(bundle.exportedAt).toLocaleString()}</p>
+            <p><strong>Exported:</strong> ${formatEuropeanDateTime(bundle.exportedAt)}</p>
             <ul>
                 ${talesCount ? `<li>${talesCount} PC Tales entries</li>` : ''}
                 ${storiesCount ? `<li>${storiesCount} stories</li>` : ''}
