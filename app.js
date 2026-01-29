@@ -74,11 +74,33 @@ async function syncToFirestore(data) {
     if (!firebaseReady || !db) return;
     setSyncStatus('syncing');
     try {
+        // Calculate approximate document size
+        const dataStr = JSON.stringify(data);
+        const sizeInBytes = new Blob([dataStr]).size;
+        const sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
+
+        console.log(`Firestore document size: ${sizeInMB} MB (${sizeInBytes} bytes)`);
+
+        if (sizeInBytes > 900000) { // Warn if approaching 1MB limit
+            console.warn(`WARNING: Document size (${sizeInMB} MB) is approaching Firestore's 1MB limit!`);
+        }
+
         await db.collection('campaigns').doc('main').set(data);
         setSyncStatus('connected');
     } catch (e) {
         console.error('Firestore write error:', e);
+        console.error('Error code:', e.code);
+        console.error('Error message:', e.message);
+
+        // Calculate and log document size on error
+        const dataStr = JSON.stringify(data);
+        const sizeInBytes = new Blob([dataStr]).size;
+        console.error(`Failed document size: ${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`);
+
         setSyncStatus('error');
+
+        // Show user-friendly error
+        alert(`Failed to sync to Firebase. Document may be too large (${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB). Check console for details.`);
     }
 }
 
