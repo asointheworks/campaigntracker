@@ -26,19 +26,13 @@
                 Characters
                 </button>
                 <button class="nav-btn" data-section="pc-tales">
-                PC Tales
+                Campaign Notes
                 </button>
                  <button class="nav-btn" data-section="rules">
                 House Rules
                 </button>
-                <button class="nav-btn" data-section="campaign-notes">
-                Campaign Notes (OOC)
-                </button>
                 <button class="nav-btn" data-section="initiative">
                 Initiative
-                </button>
-               <button class="nav-btn" data-section="gallery">
-                Gallery
                 </button>
             </nav>
             <div class="sync-status" id="sync-status" title="Firebase sync status">
@@ -271,10 +265,10 @@
             </div>
         </section>
 
-        <!-- PC Tales Section -->
+        <!-- Campaign Notes Section -->
         <section id="pc-tales" class="content-section">
             <div class="section-header">
-                <h2>PC Tales!</h2>
+                <h2>Campaign Notes</h2>
                 <p class="section-subtitle">Player Chronicles & Party Resources</p>
                 <button class="btn btn-primary" onclick="openTaleModal()">+ New Entry</button>
             </div>
@@ -298,6 +292,9 @@
                     </button>
                     <button class="tab-btn" data-tab="misc">
                         <span class="tab-icon">📦</span> Other
+                    </button>
+                    <button class="tab-btn" data-tab="session-summaries">
+                        <span class="tab-icon">📝</span> DM Session Summaries
                     </button>
                 </div>
 
@@ -391,95 +388,8 @@
                         <!-- Misc items rendered dynamically -->
                     </div>
                 </div>
-            </div>
-        </section>
 
-        <!-- Campaign Notes Section -->
-        <section id="campaign-notes" class="content-section">
-            <div class="section-header">
-                <h2>Campaign Notes</h2>
-                <p class="section-subtitle">Behind the Screen</p>
-            </div>
-
-            <div class="campaign-notes-container">
-                <div class="notes-tabs">
-                    <button class="tab-btn active" data-tab="all-campaign-notes">
-                        <span class="tab-icon">📚</span> All
-                    </button>
-                    <button class="tab-btn" data-tab="ooc-notes">
-                        <span class="tab-icon">📋</span> OOC Notes
-                    </button>
-                    <button class="tab-btn" data-tab="dm-notes-tab">
-                        <span class="tab-icon">🎲</span> DM Notes
-                    </button>
-                    <button class="tab-btn" data-tab="session-summaries">
-                        <span class="tab-icon">📝</span> Session Summaries
-                    </button>
-                </div>
-
-                <!-- All Campaign Notes Tab -->
-                <div class="tab-content active" id="all-campaign-notes">
-                    <div class="notes-list" id="all-campaign-notes-list">
-                        <!-- All notes will be rendered dynamically -->
-                    </div>
-                </div>
-
-                <!-- OOC Notes Tab -->
-                <div class="tab-content" id="ooc-notes">
-                    <div class="notes-toolbar">
-                        <button class="btn btn-primary" onclick="addOOCNote()">+ Add OOC Note</button>
-                    </div>
-                    <div class="notes-list" id="ooc-notes-list">
-                        <div class="note-card ooc">
-                            <div class="note-header">
-                                <h4>Session Planning - Chapter 1</h4>
-                                <span class="note-date">Pre-Session</span>
-                            </div>
-                            <div class="note-content">
-                                <p><strong>Key Beats:</strong></p>
-                                <ul>
-                                    <li>Introduce the party at the Yawning Portal</li>
-                                    <li>Troll attack from the well</li>
-                                    <li>Volo's proposition</li>
-                                    <li>Investigation of Floon's disappearance</li>
-                                </ul>
-                                <p><strong>Potential Hooks:</strong></p>
-                                <ul>
-                                    <li>Connect to Tharion's missing parents subplot</li>
-                                    <li>Seraphina might know someone in the Dock Ward</li>
-                                </ul>
-                            </div>
-                            <div class="note-tags">
-                                <span class="tag">planning</span>
-                                <span class="tag">chapter 1</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- DM Notes Tab -->
-                <div class="tab-content" id="dm-notes-tab">
-                    <div class="notes-toolbar">
-                        <button class="btn btn-primary" onclick="addDMNote()">+ Add DM Note</button>
-                    </div>
-                    <div class="notes-list" id="dm-notes-list">
-                        <div class="note-card dm">
-                            <div class="note-header">
-                                <h4>The Yawning Portal Atmosphere</h4>
-                                <span class="note-date">Session 1</span>
-                            </div>
-                            <div class="note-content">
-                                <p><em>"The common room buzzes with the usual crowd - adventurers nursing ales and wounds alike, merchants conducting quiet business in shadowed corners, and the ever-present rumble of Durnan's gravelly voice keeping order. The great well in the center of the room - the entrance to Undermountain itself - seems to pulse with an almost hungry energy tonight..."</em></p>
-                            </div>
-                            <div class="note-tags">
-                                <span class="tag">atmosphere</span>
-                                <span class="tag">yawning portal</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Session Summaries Tab -->
+                <!-- DM Session Summaries Tab -->
                 <div class="tab-content" id="session-summaries">
                     <div class="notes-toolbar">
                         <button class="btn btn-primary" onclick="addSessionSummary()">+ Add Session Summary</button>
@@ -1089,28 +999,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <!-- Gallery Section -->
-        <section id="gallery" class="content-section">
-            <div class="section-header">
-                <h2>Campaign Gallery</h2>
-                <p class="section-subtitle">Visual Chronicles of Waterdeep</p>
-                <button class="btn btn-primary" onclick="openImageUpload()">+ Add Image</button>
-            </div>
-
-            <div class="gallery-filters">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="maps">Maps</button>
-                <button class="filter-btn" data-filter="characters">Characters</button>
-                <button class="filter-btn" data-filter="locations">Locations</button>
-                <button class="filter-btn" data-filter="items">Items</button>
-                <button class="filter-btn" data-filter="scenes">Scenes</button>
-            </div>
-
-            <div class="gallery-grid" id="gallery-grid">
-                <!-- Gallery items rendered dynamically by JavaScript -->
             </div>
         </section>
     </main>

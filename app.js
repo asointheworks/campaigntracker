@@ -118,14 +118,10 @@ function startFirestoreListener() {
                     renderTales();
                     renderResources();
                     renderAllPCTales();
-                    renderNotes();
-                    renderDMNotes();
                     renderSessionSummaries();
-                    renderAllCampaignNotes();
                     renderNPCs();
                     renderLocations();
                     renderQuests();
-                    renderGallery();
                     renderStories();
                     renderRules();
                     loadSessionInfo();
@@ -303,7 +299,6 @@ const CampaignData = {
                 status: "active"
             }
         ],
-        gallery: [],
         files: [],
         rules: {},
         // PC Tales data
@@ -516,7 +511,7 @@ function initRulesNav() {
 }
 
 // ===================================
-// Filters (Stories & Gallery)
+// Filters (Stories)
 // ===================================
 
 function initFilters() {
@@ -529,16 +524,6 @@ function initFilters() {
             filterStories(btn.dataset.filter);
         });
     });
-
-    // Gallery filters
-    const galleryFilters = document.querySelectorAll('.gallery-filters .filter-btn');
-    galleryFilters.forEach(btn => {
-        btn.addEventListener('click', () => {
-            galleryFilters.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            filterGallery(btn.dataset.filter);
-        });
-    });
 }
 
 function filterStories(filter) {
@@ -548,17 +533,6 @@ function filterStories(filter) {
             story.style.display = 'block';
         } else {
             story.style.display = 'none';
-        }
-    });
-}
-
-function filterGallery(filter) {
-    const items = document.querySelectorAll('.gallery-item');
-    items.forEach(item => {
-        if (filter === 'all' || item.dataset.category === filter) {
-            item.style.display = 'block';
-        } else {
-            item.style.display = 'none';
         }
     });
 }
@@ -692,151 +666,6 @@ function renderStories() {
             </article>
         `;
     }).join('');
-}
-
-// ===================================
-// Note Functions
-// ===================================
-
-function addICNote() {
-    document.getElementById('note-form').reset();
-    document.getElementById('note-content-input').innerHTML = '';
-    document.getElementById('note-edit-id').value = '';
-    document.getElementById('note-type-hidden').value = 'ic';
-    document.getElementById('note-modal-title').textContent = 'New In-Character Note';
-    openModal('note-modal');
-}
-
-function addOOCNote() {
-    document.getElementById('note-form').reset();
-    document.getElementById('note-content-input').innerHTML = '';
-    document.getElementById('note-edit-id').value = '';
-    document.getElementById('note-type-hidden').value = 'ooc';
-    document.getElementById('note-modal-title').textContent = 'New Out-of-Character Note';
-    openModal('note-modal');
-}
-
-function initNoteForm() {
-    const form = document.getElementById('note-form');
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const noteType = document.getElementById('note-type-hidden').value;
-        const editId = document.getElementById('note-edit-id').value;
-        const contentEditor = document.getElementById('note-content-input');
-
-        const noteData = {
-            id: editId ? parseInt(editId) : Date.now(),
-            title: document.getElementById('note-title-input').value,
-            session: document.getElementById('note-session-input').value,
-            content: contentEditor.innerHTML,
-            tags: document.getElementById('note-tags-input').value.split(',').map(t => t.trim()).filter(t => t)
-        };
-
-        const data = CampaignData.get();
-        const arrayKey = noteType === 'dm' ? 'dmNotes' : noteType === 'ic' ? 'icNotes' : 'oocNotes';
-        if (!data[arrayKey]) data[arrayKey] = [];
-
-        if (editId) {
-            // Update existing note
-            const idx = data[arrayKey].findIndex(n => n.id === parseInt(editId));
-            if (idx !== -1) {
-                data[arrayKey][idx] = noteData;
-            }
-        } else {
-            data[arrayKey].push(noteData);
-        }
-        CampaignData.save(data);
-
-        // Clear the editor and edit id
-        contentEditor.innerHTML = '';
-        document.getElementById('note-edit-id').value = '';
-
-        renderNotes();
-        renderDMNotes();
-        renderAllCampaignNotes();
-        const icons = { dm: '🎲', ic: '🎭', ooc: '📋' };
-        CampaignData.addActivity(icons[noteType] || '📋', `${editId ? 'Updated' : 'New'} ${noteType.toUpperCase()} note: "${noteData.title}"`);
-        closeModal('note-modal');
-    });
-}
-
-function editNote(noteType, noteId) {
-    const data = CampaignData.get();
-    const arrayKey = noteType === 'dm' ? 'dmNotes' : noteType === 'ic' ? 'icNotes' : 'oocNotes';
-    const note = (data[arrayKey] || []).find(n => n.id === noteId);
-    if (!note) return;
-
-    document.getElementById('note-type-hidden').value = noteType;
-    document.getElementById('note-edit-id').value = noteId;
-    document.getElementById('note-title-input').value = note.title || '';
-    document.getElementById('note-session-input').value = note.session || '';
-    document.getElementById('note-content-input').innerHTML = note.content || '';
-    document.getElementById('note-tags-input').value = (note.tags || []).join(', ');
-    document.getElementById('note-modal-title').textContent = `Edit ${noteType.toUpperCase()} Note`;
-    openModal('note-modal');
-}
-
-function deleteNote(noteType, noteId) {
-    if (!confirm('Are you sure you want to delete this note?')) return;
-    const data = CampaignData.get();
-    const arrayKey = noteType === 'dm' ? 'dmNotes' : noteType === 'ic' ? 'icNotes' : 'oocNotes';
-    if (!data[arrayKey]) return;
-    data[arrayKey] = data[arrayKey].filter(n => n.id !== noteId);
-    CampaignData.save(data);
-    renderNotes();
-    renderDMNotes();
-    renderAllCampaignNotes();
-    CampaignData.addActivity('🗑️', `Deleted ${noteType.toUpperCase()} note`);
-}
-
-function renderNotes() {
-    const data = CampaignData.get();
-
-    function noteCardHTML(note, type) {
-        return `
-        <div class="note-card ${type}">
-            <div class="note-header">
-                <h4>${note.title}</h4>
-                <div class="note-actions">
-                    <button class="btn btn-small" onclick="editNote('${type}', ${note.id})">Edit</button>
-                    <button class="btn btn-small btn-danger" onclick="deleteNote('${type}', ${note.id})">Delete</button>
-                </div>
-            </div>
-            <span class="note-date">${note.session}</span>
-            <div class="note-content">
-                ${formatNoteContent(note.content)}
-            </div>
-            <div class="note-tags">
-                ${(note.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
-            </div>
-        </div>`;
-    }
-
-    // IC Notes
-    const icList = document.getElementById('ic-notes-list');
-    if (icList) {
-        icList.innerHTML = (data.icNotes || []).length === 0
-            ? '<div class="initiative-empty"><p>No IC notes yet.</p></div>'
-            : data.icNotes.map(note => noteCardHTML(note, 'ic')).join('');
-    }
-
-    // OOC Notes
-    const oocList = document.getElementById('ooc-notes-list');
-    if (oocList) {
-        oocList.innerHTML = (data.oocNotes || []).length === 0
-            ? '<div class="initiative-empty"><p>No OOC notes yet.</p></div>'
-            : data.oocNotes.map(note => noteCardHTML(note, 'ooc')).join('');
-    }
-}
-
-function formatNoteContent(content) {
-    // If content already has HTML tags, return as-is
-    if (content.includes('<') && content.includes('>')) {
-        return content;
-    }
-    // Otherwise, convert newlines to paragraphs
-    return content.split('\n').map(p => p.trim() ? `<p>${p}</p>` : '').join('');
 }
 
 // ===================================
@@ -1044,67 +873,6 @@ function renderQuests() {
                     </div>
                     <span class="progress-text">${quest.progress === 0 ? 'Not Started' : quest.progress === 100 ? 'Complete' : `${quest.progress}%`}</span>
                 </div>
-            </div>
-        </div>
-    `).join('');
-}
-
-// ===================================
-// Gallery Functions
-// ===================================
-
-function openImageUpload() {
-    document.getElementById('image-form').reset();
-    openModal('image-modal');
-}
-
-function initImageForm() {
-    const form = document.getElementById('image-form');
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const newImage = {
-            id: Date.now(),
-            url: document.getElementById('image-url-input').value,
-            title: document.getElementById('image-title-input').value,
-            description: document.getElementById('image-description-input').value,
-            category: document.getElementById('image-category-select').value
-        };
-
-        const data = CampaignData.get();
-        data.gallery.push(newImage);
-        CampaignData.save(data);
-
-        renderGallery();
-        CampaignData.addActivity('🎨', `New image added to gallery: "${newImage.title}"`);
-        closeModal('image-modal');
-    });
-}
-
-function renderGallery() {
-    const grid = document.getElementById('gallery-grid');
-    const data = CampaignData.get();
-
-    // Default gallery items
-    const defaultItems = [
-        { id: 'city', url: D20_PLACEHOLDER, title: 'City of Waterdeep', description: 'The City of Splendors', category: 'maps' },
-        { id: 'tavern', url: D20_PLACEHOLDER, title: 'The Yawning Portal', description: 'Famous Tavern & Dungeon Entrance', category: 'locations' },
-        { id: 'streets', url: D20_PLACEHOLDER, title: 'Streets of Waterdeep', description: 'The bustling city streets', category: 'locations' },
-        { id: 'harbor', url: D20_PLACEHOLDER, title: 'Waterdeep Harbor', description: 'The Dock Ward', category: 'locations' },
-        { id: 'noble', url: D20_PLACEHOLDER, title: 'Sea Ward', description: 'Home of Waterdeep\'s Nobility', category: 'locations' },
-        { id: 'sewers', url: D20_PLACEHOLDER, title: 'The Sewers', description: 'Beneath the streets', category: 'locations' },
-        { id: 'treasure', url: D20_PLACEHOLDER, title: 'The Dragon Hoard', description: '500,000 Gold Dragons', category: 'items' },
-        { id: 'magic', url: D20_PLACEHOLDER, title: 'Magical Artifacts', description: 'Items of Power', category: 'items' }
-    ];
-
-    const allItems = [...defaultItems, ...data.gallery];
-
-    grid.innerHTML = allItems.map(item => `
-        <div class="gallery-item" data-category="${item.category}" onclick="openLightbox('${item.url}', '${item.title}', '${item.description}')">
-            <img src="${item.url}" alt="${item.title}">
-            <div class="gallery-overlay">
-                <h4>${item.title}</h4>
-                <p>${item.description}</p>
             </div>
         </div>
     `).join('');
@@ -1986,57 +1754,37 @@ function renderAllPCTales() {
         html += '</div></div>';
     }
 
+    // Add session summaries section
+    const sessionSummaries = data.sessionSummaries || [];
+    if (sessionSummaries.length > 0) {
+        html += '<div class="all-section"><h3 class="all-section-title">DM Session Summaries</h3>';
+        html += '<div class="notes-list">';
+        html += sessionSummaries.map(summary => {
+            return `
+                <div class="session-summary-card">
+                    <div class="summary-header">
+                        <span class="summary-session">Session ${summary.sessionNumber}</span>
+                        <div class="note-actions">
+                            <button class="btn btn-small btn-danger" onclick="deleteSessionSummary(${summary.id})">Delete</button>
+                        </div>
+                    </div>
+                    <span class="summary-date">${summary.datePlayed || ''}</span>
+                    <div class="summary-content">
+                        <h4 class="summary-title">${summary.title || 'Untitled Session'}</h4>
+                        <div>${summary.content}</div>
+                        ${summary.xpEarned > 0 ? `<span class="summary-xp">+${summary.xpEarned} XP earned</span>` : ''}
+                    </div>
+                </div>`;
+        }).join('');
+        html += '</div></div>';
+    }
+
     allPCTalesContent.innerHTML = html;
 }
 
 function openResourceModal() {
     // Generic resource add - not used currently but can be extended
     openModal('resource-modal');
-}
-
-// ===================================
-// DM Notes Functions
-// ===================================
-
-function addDMNote() {
-    document.getElementById('note-form').reset();
-    document.getElementById('note-content-input').innerHTML = '';
-    document.getElementById('note-edit-id').value = '';
-    document.getElementById('note-type-hidden').value = 'dm';
-    document.getElementById('note-modal-title').textContent = 'New DM Note';
-    openModal('note-modal');
-}
-
-function renderDMNotes() {
-    const data = CampaignData.get();
-    const dmNotesList = document.getElementById('dm-notes-list');
-    if (!dmNotesList) return;
-
-    const dmNotes = data.dmNotes || [];
-
-    if (dmNotes.length === 0) {
-        dmNotesList.innerHTML = '<div class="initiative-empty"><p>No DM notes yet.</p></div>';
-        return;
-    }
-
-    dmNotesList.innerHTML = dmNotes.map(note => `
-        <div class="note-card dm">
-            <div class="note-header">
-                <h4>${note.title}</h4>
-                <div class="note-actions">
-                    <button class="btn btn-small" onclick="editNote('dm', ${note.id})">Edit</button>
-                    <button class="btn btn-small btn-danger" onclick="deleteNote('dm', ${note.id})">Delete</button>
-                </div>
-            </div>
-            <span class="note-date">${note.session}</span>
-            <div class="note-content">
-                ${formatNoteContent(note.content)}
-            </div>
-            <div class="note-tags">
-                ${(note.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
-            </div>
-        </div>
-    `).join('');
 }
 
 // ===================================
@@ -2081,7 +1829,6 @@ function initSessionSummaryForm() {
 
         CampaignData.save(data);
         renderSessionSummaries();
-        renderAllCampaignNotes();
         updateDashboardStats();
         CampaignData.addActivity('📝', `Added session ${summaryData.sessionNumber} summary`);
         closeModal('session-summary-modal');
@@ -2128,72 +1875,7 @@ function deleteSessionSummary(summaryId) {
     data.sessionSummaries = data.sessionSummaries.filter(s => s.id !== summaryId);
     CampaignData.save(data);
     renderSessionSummaries();
-    renderAllCampaignNotes();
     CampaignData.addActivity('🗑️', 'Deleted session summary');
-}
-
-function renderAllCampaignNotes() {
-    const data = CampaignData.get();
-    const allNotesList = document.getElementById('all-campaign-notes-list');
-    if (!allNotesList) return;
-
-    const oocNotes = (data.oocNotes || []).map(note => ({...note, type: 'ooc', typeName: 'OOC Note'}));
-    const dmNotes = (data.dmNotes || []).map(note => ({...note, type: 'dm', typeName: 'DM Note'}));
-    const sessionSummaries = (data.sessionSummaries || []).map(summary => ({
-        ...summary,
-        type: 'summary',
-        typeName: 'Session Summary',
-        title: summary.title || 'Untitled Session',
-        session: `Session ${summary.sessionNumber}`,
-        content: summary.content
-    }));
-
-    const allNotes = [...oocNotes, ...dmNotes, ...sessionSummaries];
-
-    if (allNotes.length === 0) {
-        allNotesList.innerHTML = '<div class="initiative-empty"><p>No campaign notes yet.</p></div>';
-        return;
-    }
-
-    allNotesList.innerHTML = allNotes.map(note => {
-        if (note.type === 'summary') {
-            return `
-                <div class="session-summary-card">
-                    <div class="summary-header">
-                        <span class="summary-session">${note.session}</span>
-                        <span class="note-type-badge">${note.typeName}</span>
-                        <div class="note-actions">
-                            <button class="btn btn-small btn-danger" onclick="deleteSessionSummary(${note.id})">Delete</button>
-                        </div>
-                    </div>
-                    <span class="summary-date">${note.datePlayed || ''}</span>
-                    <div class="summary-content">
-                        <h4 class="summary-title">${note.title}</h4>
-                        <div>${note.content}</div>
-                        ${note.xpEarned > 0 ? `<span class="summary-xp">+${note.xpEarned} XP earned</span>` : ''}
-                    </div>
-                </div>`;
-        } else {
-            return `
-                <div class="note-card ${note.type}">
-                    <div class="note-header">
-                        <h4>${note.title}</h4>
-                        <span class="note-type-badge">${note.typeName}</span>
-                        <div class="note-actions">
-                            <button class="btn btn-small" onclick="editNote('${note.type}', ${note.id})">Edit</button>
-                            <button class="btn btn-small btn-danger" onclick="deleteNote('${note.type}', ${note.id})">Delete</button>
-                        </div>
-                    </div>
-                    <span class="note-date">${note.session}</span>
-                    <div class="note-content">
-                        ${formatNoteContent(note.content)}
-                    </div>
-                    <div class="note-tags">
-                        ${(note.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
-                    </div>
-                </div>`;
-        }
-    }).join('');
 }
 
 // ===================================
@@ -2465,31 +2147,6 @@ function clearEncounter() {
 function initPCTalesTabs() {
     const tabButtons = document.querySelectorAll('.pc-tales-container .tab-btn');
     const tabContents = document.querySelectorAll('.pc-tales-container .tab-content');
-
-    tabButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const targetTab = btn.dataset.tab;
-
-            tabButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-                if (content.id === targetTab) {
-                    content.classList.add('active');
-                }
-            });
-        });
-    });
-}
-
-// ===================================
-// Campaign Notes Tab Navigation
-// ===================================
-
-function initCampaignNotesTabs() {
-    const tabButtons = document.querySelectorAll('.campaign-notes-container .tab-btn');
-    const tabContents = document.querySelectorAll('.campaign-notes-container .tab-content');
 
     tabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -2862,7 +2519,7 @@ async function confirmImport() {
 
         // Merge arrays by ID (skip duplicates)
         const arrayKeys = ['tales', 'stories', 'files', 'characters', 'npcs', 'locations', 'quests',
-                          'icNotes', 'oocNotes', 'dmNotes', 'sessionSummaries', 'gallery', 'activity'];
+                          'icNotes', 'oocNotes', 'dmNotes', 'sessionSummaries', 'activity'];
 
         for (const key of arrayKeys) {
             if (Array.isArray(imported[key]) && imported[key].length > 0) {
@@ -2905,14 +2562,10 @@ async function confirmImport() {
         renderTales();
         renderResources();
         renderAllPCTales();
-        renderNotes();
-        renderDMNotes();
         renderSessionSummaries();
-        renderAllCampaignNotes();
         renderNPCs();
         renderLocations();
         renderQuests();
-        renderGallery();
         renderStories();
         renderRules();
         updateDashboardStats();
@@ -3016,28 +2669,22 @@ document.addEventListener('DOMContentLoaded', () => {
     initNPCForm();
     initLocationForm();
     initQuestForm();
-    initImageForm();
     initCharacterForm();
     initCampaignForm();
     initResourceForm();
     initSessionSummaryForm();
     initCombatNPCForm();
     initPCTalesTabs();
-    initCampaignNotesTabs();
 
     // Render initial data
     renderCharacters();
     renderTales();
     renderResources();
     renderAllPCTales();
-    renderNotes();
-    renderDMNotes();
     renderSessionSummaries();
-    renderAllCampaignNotes();
     renderNPCs();
     renderLocations();
     renderQuests();
-    renderGallery();
     renderRules();
     loadPCsForInitiative();
     renderInitiativeList();
@@ -3075,7 +2722,6 @@ window.addOOCNote = addOOCNote;
 window.addNPC = addNPC;
 window.addLocation = addLocation;
 window.addQuest = addQuest;
-window.openImageUpload = openImageUpload;
 window.openLightbox = openLightbox;
 window.closeLightbox = closeLightbox;
 window.removeFile = removeFile;
