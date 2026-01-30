@@ -2500,7 +2500,7 @@ async function confirmImport() {
 
         // Merge arrays by ID (skip duplicates)
         const arrayKeys = ['tales', 'stories', 'files', 'characters', 'npcs', 'locations', 'quests',
-                          'icNotes', 'oocNotes', 'dmNotes', 'sessionSummaries', 'activity'];
+                          'sessionSummaries', 'activity'];
 
         for (const key of arrayKeys) {
             if (Array.isArray(imported[key]) && imported[key].length > 0) {
