@@ -267,24 +267,6 @@ const CampaignData = {
                 createdAt: new Date().toISOString()
             }
         ],
-        icNotes: [
-            {
-                id: 0,
-                title: "The Yawning Portal Atmosphere",
-                session: "Session 1",
-                content: "\"The common room buzzes with the usual crowd - adventurers nursing ales and wounds alike, merchants conducting quiet business in shadowed corners, and the ever-present rumble of Durnan's gravelly voice keeping order. The great well in the center of the room - the entrance to Undermountain itself - seems to pulse with an almost hungry energy tonight...\"",
-                tags: ["atmosphere", "yawning portal"]
-            }
-        ],
-        oocNotes: [
-            {
-                id: 0,
-                title: "Session Planning - Chapter 1",
-                session: "Pre-Session",
-                content: "**Key Beats:**\n- Introduce the party at the Yawning Portal\n- Troll attack from the well\n- Volo's proposition\n- Investigation of Floon's disappearance\n\n**Potential Hooks:**\n- Connect to Tharion's missing parents subplot\n- Seraphina might know someone in the Dock Ward",
-                tags: ["planning", "chapter 1"]
-            }
-        ],
         npcs: [],
         locations: [],
         quests: [
@@ -311,8 +293,7 @@ const CampaignData = {
             property: '<p><em>No properties acquired</em></p>',
             contacts: '<p><em>No notable contacts yet</em></p>'
         },
-        // Campaign Notes data
-        dmNotes: [],
+        // Session summaries (moved to Campaign Notes section)
         sessionSummaries: [],
         // Initiative Tracker
         encounter: {
@@ -2665,7 +2646,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize forms
     initTaleForm();
-    initNoteForm();
     initNPCForm();
     initLocationForm();
     initQuestForm();
