@@ -151,9 +151,11 @@ function startFirestoreListener() {
                     renderCharacters();
                     renderTales();
                     renderResources();
+                    renderAllPCTales();
                     renderNotes();
                     renderDMNotes();
                     renderSessionSummaries();
+                    renderAllCampaignNotes();
                     renderNPCs();
                     renderLocations();
                     renderQuests();
@@ -1003,6 +1005,7 @@ function initNoteForm() {
 
         renderNotes();
         renderDMNotes();
+        renderAllCampaignNotes();
         const icons = { dm: '🎲', ic: '🎭', ooc: '📋' };
         CampaignData.addActivity(icons[noteType] || '📋', `${editId ? 'Updated' : 'New'} ${noteType.toUpperCase()} note: "${noteData.title}"`);
         closeModal('note-modal');
@@ -1034,6 +1037,7 @@ function deleteNote(noteType, noteId) {
     CampaignData.save(data);
     renderNotes();
     renderDMNotes();
+    renderAllCampaignNotes();
     CampaignData.addActivity('🗑️', `Deleted ${noteType.toUpperCase()} note`);
 }
 
@@ -2180,6 +2184,7 @@ function deleteTale(taleId) {
     data.tales = data.tales.filter(t => t.id !== taleId);
     CampaignData.save(data);
     renderTales();
+    renderAllPCTales();
     CampaignData.addActivity('🗑️', 'Deleted PC Tales entry');
 }
 
@@ -2226,6 +2231,7 @@ function initTaleForm() {
 
         CampaignData.save(data);
         renderTales();
+        renderAllPCTales();
         CampaignData.addActivity('📔', `Added new entry: "${taleData.title}"`);
         closeModal('tale-modal');
     });
@@ -2366,6 +2372,7 @@ function initResourceForm() {
 
         CampaignData.save(data);
         renderResources();
+        renderAllPCTales();
         CampaignData.addActivity('💰', `Updated party ${resourceType}`);
         closeModal('resource-modal');
     });
@@ -2389,6 +2396,92 @@ function renderResources() {
 
     const contacts = document.getElementById('party-contacts');
     if (contacts) contacts.innerHTML = resources.contacts || '<p><em>No notable contacts yet</em></p>';
+}
+
+function renderAllPCTales() {
+    const data = CampaignData.get();
+    const allPCTalesContent = document.getElementById('all-pc-tales-content');
+    if (!allPCTalesContent) return;
+
+    const tales = data.tales || [];
+    const resources = data.resources || {};
+
+    let html = '';
+
+    // Add resources section first
+    html += '<div class="all-section"><h3 class="all-section-title">Shared Resources</h3>';
+    html += '<div class="resources-grid">';
+    html += `
+        <div class="resource-card">
+            <div class="resource-header">
+                <h4>💰 Party Gold</h4>
+                <button class="btn btn-small" onclick="editResource('gold')">Edit</button>
+            </div>
+            <div class="resource-value">${resources.gold || 0} gp</div>
+            <div class="resource-notes">${resources.goldNotes || 'Track party treasury here'}</div>
+        </div>
+        <div class="resource-card">
+            <div class="resource-header">
+                <h4>🎒 Party Inventory</h4>
+                <button class="btn btn-small" onclick="editResource('inventory')">Edit</button>
+            </div>
+            <div class="resource-content">${resources.inventory || '<p><em>No shared items yet</em></p>'}</div>
+        </div>
+        <div class="resource-card">
+            <div class="resource-header">
+                <h4>🏠 Party Property</h4>
+                <button class="btn btn-small" onclick="editResource('property')">Edit</button>
+            </div>
+            <div class="resource-content">${resources.property || '<p><em>No properties acquired</em></p>'}</div>
+        </div>
+        <div class="resource-card">
+            <div class="resource-header">
+                <h4>👥 Contacts & Allies</h4>
+                <button class="btn btn-small" onclick="editResource('contacts')">Edit</button>
+            </div>
+            <div class="resource-content">${resources.contacts || '<p><em>No notable contacts yet</em></p>'}</div>
+        </div>
+    `;
+    html += '</div></div>';
+
+    // Add tales section
+    if (tales.length === 0) {
+        html += '<div class="all-section"><h3 class="all-section-title">Tales</h3>';
+        html += '<div class="initiative-empty"><p>No tales yet.</p></div></div>';
+    } else {
+        html += '<div class="all-section"><h3 class="all-section-title">Tales</h3>';
+        html += '<div class="tales-grid">';
+        html += tales.map(tale => {
+            const typeLabels = {
+                'journal': 'IC Log',
+                'relationship': 'Relationship',
+                'background': 'Background',
+                'misc': 'Other'
+            };
+            const typeLabel = typeLabels[tale.type] || tale.type;
+            return `
+                <div class="tale-card">
+                    <div class="tale-header">
+                        <span class="tale-type-badge ${tale.type}">${typeLabel}</span>
+                        <span class="tale-session">${tale.session || ''}</span>
+                    </div>
+                    <div class="tale-content">
+                        <h4 class="tale-title">${tale.title}</h4>
+                        <p class="tale-meta">${tale.author || 'Unknown'}</p>
+                        <div class="tale-preview">${stripHtml(tale.content).substring(0, 150)}...</div>
+                    </div>
+                    <div class="tale-actions">
+                        <button class="btn btn-small" onclick="readTale(${tale.id})">Read</button>
+                        <button class="btn btn-small" onclick="editTale(${tale.id})">Edit</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteTale(${tale.id})">Delete</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        html += '</div></div>';
+    }
+
+    allPCTalesContent.innerHTML = html;
 }
 
 function openResourceModal() {
@@ -2483,6 +2576,7 @@ function initSessionSummaryForm() {
 
         CampaignData.save(data);
         renderSessionSummaries();
+        renderAllCampaignNotes();
         updateDashboardStats();
         CampaignData.addActivity('📝', `Added session ${summaryData.sessionNumber} summary`);
         closeModal('session-summary-modal');
@@ -2529,7 +2623,72 @@ function deleteSessionSummary(summaryId) {
     data.sessionSummaries = data.sessionSummaries.filter(s => s.id !== summaryId);
     CampaignData.save(data);
     renderSessionSummaries();
+    renderAllCampaignNotes();
     CampaignData.addActivity('🗑️', 'Deleted session summary');
+}
+
+function renderAllCampaignNotes() {
+    const data = CampaignData.get();
+    const allNotesList = document.getElementById('all-campaign-notes-list');
+    if (!allNotesList) return;
+
+    const oocNotes = (data.oocNotes || []).map(note => ({...note, type: 'ooc', typeName: 'OOC Note'}));
+    const dmNotes = (data.dmNotes || []).map(note => ({...note, type: 'dm', typeName: 'DM Note'}));
+    const sessionSummaries = (data.sessionSummaries || []).map(summary => ({
+        ...summary,
+        type: 'summary',
+        typeName: 'Session Summary',
+        title: summary.title || 'Untitled Session',
+        session: `Session ${summary.sessionNumber}`,
+        content: summary.content
+    }));
+
+    const allNotes = [...oocNotes, ...dmNotes, ...sessionSummaries];
+
+    if (allNotes.length === 0) {
+        allNotesList.innerHTML = '<div class="initiative-empty"><p>No campaign notes yet.</p></div>';
+        return;
+    }
+
+    allNotesList.innerHTML = allNotes.map(note => {
+        if (note.type === 'summary') {
+            return `
+                <div class="session-summary-card">
+                    <div class="summary-header">
+                        <span class="summary-session">${note.session}</span>
+                        <span class="note-type-badge">${note.typeName}</span>
+                        <div class="note-actions">
+                            <button class="btn btn-small btn-danger" onclick="deleteSessionSummary(${note.id})">Delete</button>
+                        </div>
+                    </div>
+                    <span class="summary-date">${note.datePlayed || ''}</span>
+                    <div class="summary-content">
+                        <h4 class="summary-title">${note.title}</h4>
+                        <div>${note.content}</div>
+                        ${note.xpEarned > 0 ? `<span class="summary-xp">+${note.xpEarned} XP earned</span>` : ''}
+                    </div>
+                </div>`;
+        } else {
+            return `
+                <div class="note-card ${note.type}">
+                    <div class="note-header">
+                        <h4>${note.title}</h4>
+                        <span class="note-type-badge">${note.typeName}</span>
+                        <div class="note-actions">
+                            <button class="btn btn-small" onclick="editNote('${note.type}', ${note.id})">Edit</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteNote('${note.type}', ${note.id})">Delete</button>
+                        </div>
+                    </div>
+                    <span class="note-date">${note.session}</span>
+                    <div class="note-content">
+                        ${formatNoteContent(note.content)}
+                    </div>
+                    <div class="note-tags">
+                        ${(note.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                </div>`;
+        }
+    }).join('');
 }
 
 // ===================================
@@ -3362,9 +3521,11 @@ async function confirmImport() {
         renderCharacters();
         renderTales();
         renderResources();
+        renderAllPCTales();
         renderNotes();
         renderDMNotes();
         renderSessionSummaries();
+        renderAllCampaignNotes();
         renderNPCs();
         renderLocations();
         renderQuests();
@@ -3486,9 +3647,11 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCharacters();
     renderTales();
     renderResources();
+    renderAllPCTales();
     renderNotes();
     renderDMNotes();
     renderSessionSummaries();
+    renderAllCampaignNotes();
     renderNPCs();
     renderLocations();
     renderQuests();

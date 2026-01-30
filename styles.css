@@ -2732,6 +2732,17 @@ a:hover {
     color: var(--primary-dark);
 }
 
+.note-type-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    font-weight: bold;
+    background: var(--accent);
+    color: white;
+    margin-left: var(--spacing-xs);
+}
+
 .tale-content {
     padding: var(--spacing-md);
 }
@@ -2878,6 +2889,18 @@ a:hover {
     background: rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-md);
     border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.all-section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.all-section-title {
+    font-size: 1.3rem;
+    color: var(--accent);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 2px solid rgba(212, 175, 55, 0.3);
 }
 
 .note-card.dm {
