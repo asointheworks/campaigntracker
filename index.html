@@ -281,7 +281,10 @@
 
             <div class="pc-tales-container">
                 <div class="tales-tabs">
-                    <button class="tab-btn active" data-tab="journals">
+                    <button class="tab-btn active" data-tab="all-pc-tales">
+                        <span class="tab-icon">📚</span> All
+                    </button>
+                    <button class="tab-btn" data-tab="journals">
                         <span class="tab-icon">📔</span> IC Logs & Journals
                     </button>
                     <button class="tab-btn" data-tab="resources">
@@ -298,8 +301,15 @@
                     </button>
                 </div>
 
+                <!-- All PC Tales Tab -->
+                <div class="tab-content active" id="all-pc-tales">
+                    <div id="all-pc-tales-content">
+                        <!-- All tales and resources will be rendered dynamically -->
+                    </div>
+                </div>
+
                 <!-- IC Logs & Journals Tab -->
-                <div class="tab-content active" id="journals">
+                <div class="tab-content" id="journals">
                     <div class="notes-toolbar">
                         <button class="btn btn-primary" onclick="openTaleModal('journal')">+ Add Journal Entry</button>
                     </div>
@@ -393,7 +403,10 @@
 
             <div class="campaign-notes-container">
                 <div class="notes-tabs">
-                    <button class="tab-btn active" data-tab="ooc-notes">
+                    <button class="tab-btn active" data-tab="all-campaign-notes">
+                        <span class="tab-icon">📚</span> All
+                    </button>
+                    <button class="tab-btn" data-tab="ooc-notes">
                         <span class="tab-icon">📋</span> OOC Notes
                     </button>
                     <button class="tab-btn" data-tab="dm-notes-tab">
@@ -404,8 +417,15 @@
                     </button>
                 </div>
 
+                <!-- All Campaign Notes Tab -->
+                <div class="tab-content active" id="all-campaign-notes">
+                    <div class="notes-list" id="all-campaign-notes-list">
+                        <!-- All notes will be rendered dynamically -->
+                    </div>
+                </div>
+
                 <!-- OOC Notes Tab -->
-                <div class="tab-content active" id="ooc-notes">
+                <div class="tab-content" id="ooc-notes">
                     <div class="notes-toolbar">
                         <button class="btn btn-primary" onclick="addOOCNote()">+ Add OOC Note</button>
                     </div>
