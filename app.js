@@ -253,6 +253,216 @@ const FileStore = {
 };
 
 // ===================================
+// Image Utilities (Google Drive Support)
+// ===================================
+
+/*
+ * USAGE EXAMPLE - React Component:
+ *
+ * function GoogleDriveImage({ driveUrl, alt = "Image", className = "" }) {
+ *     const [imageUrl, setImageUrl] = React.useState(null);
+ *     const [error, setError] = React.useState(null);
+ *
+ *     React.useEffect(() => {
+ *         if (!driveUrl) {
+ *             setError("No URL provided");
+ *             return;
+ *         }
+ *
+ *         // Convert Google Drive link to direct URL
+ *         const directUrl = ImageUtils.getDirectDriveUrl(driveUrl);
+ *
+ *         if (directUrl) {
+ *             setImageUrl(directUrl);
+ *             setError(null);
+ *         } else {
+ *             setError("Invalid Google Drive URL");
+ *         }
+ *     }, [driveUrl]);
+ *
+ *     if (error) {
+ *         return <div className="error">{error}</div>;
+ *     }
+ *
+ *     if (!imageUrl) {
+ *         return <div>Loading...</div>;
+ *     }
+ *
+ *     return (
+ *         <img
+ *             src={imageUrl}
+ *             alt={alt}
+ *             className={className}
+ *             onError={(e) => {
+ *                 // Fallback to thumbnail URL if primary URL fails
+ *                 const thumbnailUrl = ImageUtils.getDriveThumbnailUrl(driveUrl);
+ *                 if (thumbnailUrl && e.target.src !== thumbnailUrl) {
+ *                     e.target.src = thumbnailUrl;
+ *                 } else {
+ *                     setError("Failed to load image");
+ *                 }
+ *             }}
+ *         />
+ *     );
+ * }
+ *
+ * // Usage:
+ * <GoogleDriveImage
+ *     driveUrl="https://drive.google.com/file/d/1ABC123xyz/view?usp=sharing"
+ *     alt="Character Portrait"
+ *     className="character-portrait"
+ * />
+ *
+ * ========================================
+ *
+ * USAGE EXAMPLE - Vanilla JavaScript:
+ *
+ * function renderGoogleDriveImage(driveUrl, containerId) {
+ *     const container = document.getElementById(containerId);
+ *
+ *     // Validate URL
+ *     if (!driveUrl) {
+ *         container.innerHTML = '<div class="error">No URL provided</div>';
+ *         return;
+ *     }
+ *
+ *     // Convert to direct URL
+ *     const directUrl = ImageUtils.getDirectDriveUrl(driveUrl);
+ *
+ *     if (!directUrl) {
+ *         container.innerHTML = '<div class="error">Invalid Google Drive URL</div>';
+ *         return;
+ *     }
+ *
+ *     // Create image element
+ *     const img = document.createElement('img');
+ *     img.src = directUrl;
+ *     img.alt = 'Google Drive Image';
+ *     img.className = 'drive-image';
+ *
+ *     // Error handling with fallback to thumbnail
+ *     img.onerror = function() {
+ *         const thumbnailUrl = ImageUtils.getDriveThumbnailUrl(driveUrl);
+ *         if (thumbnailUrl && this.src !== thumbnailUrl) {
+ *             this.src = thumbnailUrl;
+ *         } else {
+ *             container.innerHTML = '<div class="error">Failed to load image</div>';
+ *         }
+ *     };
+ *
+ *     container.innerHTML = '';
+ *     container.appendChild(img);
+ * }
+ *
+ * // Usage:
+ * renderGoogleDriveImage(
+ *     'https://drive.google.com/file/d/1ABC123xyz/view?usp=sharing',
+ *     'image-container'
+ * );
+ */
+
+const ImageUtils = {
+    /**
+     * Converts a Google Drive sharing link to a direct image URL
+     * @param {string} driveUrl - Standard Google Drive sharing link
+     * @returns {string|null} Direct image URL or null if malformed
+     *
+     * Supports multiple Google Drive URL formats:
+     * - https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+     * - https://drive.google.com/open?id=FILE_ID
+     * - https://drive.google.com/uc?id=FILE_ID
+     */
+    getDirectDriveUrl(driveUrl) {
+        if (!driveUrl || typeof driveUrl !== 'string') {
+            return null;
+        }
+
+        // Regex to extract FILE_ID from various Google Drive URL formats
+        const patterns = [
+            /\/file\/d\/([a-zA-Z0-9_-]+)/,  // /file/d/FILE_ID/view
+            /[?&]id=([a-zA-Z0-9_-]+)/,      // ?id=FILE_ID or &id=FILE_ID
+            /\/d\/([a-zA-Z0-9_-]+)/          // /d/FILE_ID
+        ];
+
+        for (const pattern of patterns) {
+            const match = driveUrl.match(pattern);
+            if (match && match[1]) {
+                const fileId = match[1];
+                // Primary format - works for most cases
+                return `https://drive.google.com/uc?export=view&id=${fileId}`;
+            }
+        }
+
+        // If no FILE_ID found, return null (malformed URL)
+        return null;
+    },
+
+    /**
+     * Alternative thumbnail URL format (better CORS support)
+     * @param {string} driveUrl - Standard Google Drive sharing link
+     * @param {number} size - Thumbnail size (default: 1000)
+     * @returns {string|null} Thumbnail URL or null if malformed
+     */
+    getDriveThumbnailUrl(driveUrl, size = 1000) {
+        if (!driveUrl || typeof driveUrl !== 'string') {
+            return null;
+        }
+
+        const patterns = [
+            /\/file\/d\/([a-zA-Z0-9_-]+)/,
+            /[?&]id=([a-zA-Z0-9_-]+)/,
+            /\/d\/([a-zA-Z0-9_-]+)/
+        ];
+
+        for (const pattern of patterns) {
+            const match = driveUrl.match(pattern);
+            if (match && match[1]) {
+                const fileId = match[1];
+                // Thumbnail format - often better for CORS
+                return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}`;
+            }
+        }
+
+        return null;
+    },
+
+    /**
+     * Detects if a URL is a Google Drive link
+     * @param {string} url - URL to check
+     * @returns {boolean} True if Google Drive URL
+     */
+    isGoogleDriveUrl(url) {
+        if (!url || typeof url !== 'string') {
+            return false;
+        }
+        return url.includes('drive.google.com');
+    },
+
+    /**
+     * Processes a portrait URL - converts Google Drive links automatically
+     * @param {string} url - Portrait URL (can be Google Drive or direct)
+     * @returns {string} Processed URL ready for <img> src
+     */
+    processPortraitUrl(url) {
+        if (!url) {
+            return url;
+        }
+
+        // If it's a Google Drive URL, convert it
+        if (this.isGoogleDriveUrl(url)) {
+            // Try primary format first
+            const directUrl = this.getDirectDriveUrl(url);
+            if (directUrl) {
+                return directUrl;
+            }
+        }
+
+        // Return as-is for non-Drive URLs or if conversion failed
+        return url;
+    }
+};
+
+// ===================================
 // Data Management
 // ===================================
 
@@ -1585,7 +1795,14 @@ function initPortraitUpload() {
 
 function getPortraitValue() {
     if (_portraitDataUrl) return _portraitDataUrl;
-    return document.getElementById('character-portrait-input').value || '';
+    const urlInput = document.getElementById('character-portrait-input').value || '';
+
+    // Automatically convert Google Drive sharing links to direct image URLs
+    if (urlInput && ImageUtils.isGoogleDriveUrl(urlInput)) {
+        return ImageUtils.processPortraitUrl(urlInput);
+    }
+
+    return urlInput;
 }
 
 function resetPortraitState() {

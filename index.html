@@ -1580,7 +1580,10 @@
                                 <button type="button" class="portrait-tab" onclick="switchPortraitTab('upload')">Upload</button>
                             </div>
                             <div class="portrait-tab-content active" id="portrait-url-tab">
-                                <input type="url" id="character-portrait-input" placeholder="https://... (leave blank for default)">
+                                <input type="url" id="character-portrait-input" placeholder="Paste image URL or Google Drive link">
+                                <small style="display: block; margin-top: 0.5rem; color: #888; font-size: 0.85rem;">
+                                    💡 Supports Google Drive sharing links (auto-converted to direct image URLs)
+                                </small>
                             </div>
                             <div class="portrait-tab-content" id="portrait-upload-tab">
                                 <div class="portrait-upload-zone" id="portrait-upload-zone">
