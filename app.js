@@ -417,7 +417,13 @@ const ImageUtils = {
 
         // If it's a Google Drive URL, convert it
         if (this.isGoogleDriveUrl(url)) {
-            // Try primary format first
+            // Use thumbnail format by default (better CORS support)
+            const thumbnailUrl = this.getDriveThumbnailUrl(url, 1000);
+            if (thumbnailUrl) {
+                return thumbnailUrl;
+            }
+
+            // Fallback to direct URL if thumbnail fails
             const directUrl = this.getDirectDriveUrl(url);
             if (directUrl) {
                 return directUrl;
@@ -426,6 +432,18 @@ const ImageUtils = {
 
         // Return as-is for non-Drive URLs or if conversion failed
         return url;
+    },
+
+    /**
+     * Gets both URL formats for fallback strategy
+     * @param {string} driveUrl - Google Drive sharing link
+     * @returns {object} Object with thumbnail and direct URLs
+     */
+    getBothDriveUrls(driveUrl) {
+        return {
+            thumbnail: this.getDriveThumbnailUrl(driveUrl, 1000),
+            direct: this.getDirectDriveUrl(driveUrl)
+        };
     }
 };
 
