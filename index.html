@@ -242,15 +242,119 @@
                 </div>
             </div>
 
-            <!-- Character Filters -->
-            <div class="character-filters">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="pc">Player Characters</button>
-                <button class="filter-btn" data-filter="npc">NPCs</button>
+            <!-- Character Controls -->
+            <div class="character-controls">
+                <!-- View Mode Toggle -->
+                <div class="view-mode-selector">
+                    <label>View:</label>
+                    <button class="view-mode-btn active" data-view="card" title="Card View">
+                        <span class="view-icon">🎴</span> Card
+                    </button>
+                    <button class="view-mode-btn" data-view="table" title="Table View">
+                        <span class="view-icon">📋</span> Table
+                    </button>
+                    <button class="view-mode-btn" data-view="list" title="List View">
+                        <span class="view-icon">📝</span> List
+                    </button>
+                </div>
+
+                <!-- Card Density (only shown in card view) -->
+                <div class="card-density-selector" id="card-density-selector">
+                    <label>Size:</label>
+                    <button class="density-btn" data-density="small">Small</button>
+                    <button class="density-btn active" data-density="medium">Medium</button>
+                    <button class="density-btn" data-density="large">Large</button>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="character-search">
+                    <input type="text" id="character-search-input" placeholder="Search characters..." />
+                    <span class="search-icon">🔍</span>
+                </div>
             </div>
 
-            <div class="party-grid" id="party-grid">
+            <!-- Advanced Filters & Sort -->
+            <div class="character-filter-panel">
+                <!-- Type Filter -->
+                <div class="filter-group">
+                    <label>Type:</label>
+                    <div class="character-filters">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="pc">PCs</button>
+                        <button class="filter-btn" data-filter="npc">NPCs</button>
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <div class="status-filters">
+                        <button class="filter-btn active" data-status="all">All</button>
+                        <button class="filter-btn" data-status="active">Active</button>
+                        <button class="filter-btn" data-status="deceased">Deceased</button>
+                    </div>
+                </div>
+
+                <!-- Level Range Filter -->
+                <div class="filter-group">
+                    <label>Level:</label>
+                    <div class="level-filter">
+                        <input type="number" id="level-min" min="1" max="20" placeholder="Min" />
+                        <span>to</span>
+                        <input type="number" id="level-max" min="1" max="20" placeholder="Max" />
+                    </div>
+                </div>
+
+                <!-- Controller Filter -->
+                <div class="filter-group">
+                    <label>Controller:</label>
+                    <select id="controller-filter">
+                        <option value="all">All Controllers</option>
+                        <!-- Will be populated dynamically -->
+                    </select>
+                </div>
+
+                <!-- Sort Controls -->
+                <div class="filter-group">
+                    <label>Sort by:</label>
+                    <select id="sort-select">
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="level-desc">Level (High-Low)</option>
+                        <option value="level-asc">Level (Low-High)</option>
+                        <option value="modified-desc">Recently Modified</option>
+                        <option value="added-desc">Recently Added</option>
+                    </select>
+                </div>
+
+                <!-- Grouping Toggle -->
+                <div class="filter-group">
+                    <label>
+                        <input type="checkbox" id="group-toggle" />
+                        Group by Type
+                    </label>
+                </div>
+
+                <!-- Clear Filters -->
+                <div class="filter-group">
+                    <button class="btn btn-small" onclick="clearCharacterFilters()">Clear Filters</button>
+                </div>
+            </div>
+
+            <!-- Results Count -->
+            <div class="character-results-info">
+                <span id="character-count">0 characters</span>
+            </div>
+
+            <div class="party-container" id="party-container">
                 <!-- Characters will be rendered dynamically -->
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination-controls" id="pagination-controls" style="display: none;">
+                <button class="btn btn-small" id="prev-page" disabled>← Previous</button>
+                <span id="page-info">Page 1 of 1</span>
+                <button class="btn btn-small" id="next-page" disabled>Next →</button>
             </div>
 
             <!-- DM Card -->
