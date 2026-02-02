@@ -1668,7 +1668,8 @@ function initCharacterForm() {
             deceased: document.getElementById('character-deceased-input').checked,
             portrait: portraitValue,
             background: backgroundEditor.innerHTML,
-            createdAt: currentEditingCharacterId ? undefined : new Date().toISOString()
+            createdAt: currentEditingCharacterId ? undefined : new Date().toISOString(),
+            modifiedAt: new Date().toISOString()
         };
 
         // Sanitize and validate character data
@@ -1695,6 +1696,10 @@ function initCharacterForm() {
             CampaignData.save(data);
             CampaignData.addActivity('⚔️', `Added new ${characterData.type.toUpperCase()}: "${characterData.name}"`);
         }
+
+        // Repopulate controller filter dropdown
+        populateControllerFilter();
+
         renderCharacters();
         loadPCsForInitiative(); // Refresh initiative tracker PC list
         loadNPCsForInitiative(); // Refresh initiative tracker NPC list
@@ -1734,138 +1739,504 @@ function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, (m) => map[m]);
 }
 
-async function renderCharacters(filter = 'all') {
-    const grid = document.getElementById('party-grid');
+// ===================================
+// Character View Preferences & State
+// ===================================
+
+const CharacterViewState = {
+    viewMode: 'card',
+    cardDensity: 'medium',
+    searchQuery: '',
+    typeFilter: 'all',
+    statusFilter: 'all',
+    levelMin: null,
+    levelMax: null,
+    controllerFilter: 'all',
+    sortBy: 'name-asc',
+    groupByType: false,
+    currentPage: 1,
+    itemsPerPage: 30,
+
+    // Load preferences from localStorage
+    load() {
+        const saved = localStorage.getItem('characterViewPreferences');
+        if (saved) {
+            try {
+                const prefs = JSON.parse(saved);
+                Object.assign(this, prefs);
+            } catch (e) {
+                console.error('Failed to load view preferences:', e);
+            }
+        }
+    },
+
+    // Save preferences to localStorage
+    save() {
+        try {
+            const prefs = {
+                viewMode: this.viewMode,
+                cardDensity: this.cardDensity,
+                sortBy: this.sortBy,
+                groupByType: this.groupByType,
+                itemsPerPage: this.itemsPerPage
+            };
+            localStorage.setItem('characterViewPreferences', JSON.stringify(prefs));
+        } catch (e) {
+            console.error('Failed to save view preferences:', e);
+        }
+    }
+};
+
+// ===================================
+// Character Rendering
+// ===================================
+
+async function renderCharacters() {
+    const container = document.getElementById('party-container');
 
     try {
         const data = CampaignData.get();
 
         if (!data || !Array.isArray(data.characters)) {
             console.error('Invalid data structure: characters array not found');
-            grid.innerHTML = '<div class="party-empty-state"><p>Error loading characters. Please refresh the page.</p></div>';
+            container.innerHTML = '<div class="party-empty-state"><p>Error loading characters. Please refresh the page.</p></div>';
             return;
         }
 
         let characters = data.characters;
 
-        // Apply filter
-        if (filter !== 'all') {
-            characters = characters.filter(c => c && c.type === filter);
-        }
+        // Apply filters
+        characters = filterCharacters(characters);
+
+        // Apply sorting
+        characters = sortCharacters(characters);
+
+        // Update count display
+        updateCharacterCount(characters.length, data.characters.length);
 
         if (characters.length === 0) {
-            grid.innerHTML = `
+            container.innerHTML = `
                 <div class="party-empty-state">
                     <div class="empty-icon">⚔️</div>
-                    <h3>No Characters Yet</h3>
-                    <p>Add your first character to get started!</p>
-                    <button class="btn btn-primary" onclick="openCharacterModal()">+ Add Character</button>
+                    <h3>No Characters Found</h3>
+                    <p>${data.characters.length === 0 ? 'Add your first character to get started!' : 'Try adjusting your filters.'}</p>
+                    ${data.characters.length === 0 ? '<button class="btn btn-primary" onclick="openCharacterModal()">+ Add Character</button>' : ''}
                 </div>
             `;
+            document.getElementById('pagination-controls').style.display = 'none';
             return;
         }
 
-        const renderedCharacters = [];
+        // Calculate pagination
+        const totalPages = Math.ceil(characters.length / CharacterViewState.itemsPerPage);
+        CharacterViewState.currentPage = Math.min(CharacterViewState.currentPage, totalPages);
 
-        // Load all portraits from IndexedDB in parallel
-        const portraitPromises = characters.map(async (char) => {
-            if (char && char.portrait && char.portrait.startsWith('indexeddb:')) {
-                try {
-                    const portraitId = char.portrait.replace('indexeddb:', '');
-                    const file = await FileStore.getFile(portraitId);
-                    return { id: char.id, portrait: file && file.data ? file.data : getDefaultPortrait(char.type || 'npc') };
-                } catch (e) {
-                    console.error('Failed to load portrait from IndexedDB:', e);
-                    return { id: char.id, portrait: getDefaultPortrait(char.type || 'npc') };
-                }
-            }
-            return null;
-        });
+        // Get characters for current page
+        const startIdx = (CharacterViewState.currentPage - 1) * CharacterViewState.itemsPerPage;
+        const endIdx = startIdx + CharacterViewState.itemsPerPage;
+        const pageCharacters = characters.slice(startIdx, endIdx);
 
-        const loadedPortraits = await Promise.all(portraitPromises);
-        const portraitMap = {};
-        loadedPortraits.forEach(p => {
-            if (p) portraitMap[p.id] = p.portrait;
-        });
+        // Load portraits lazily
+        const portraitMap = await loadPortraitsLazy(pageCharacters);
 
-        characters.forEach((char, index) => {
-            try {
-                // Validate character has required fields
-                if (!char || !char.id) {
-                    console.warn(`Character at index ${index} is missing required fields:`, char);
-                    return;
-                }
-
-                // Use loaded portrait from IndexedDB if available
-                let portraitSrc = char.portrait || getDefaultPortrait(char.type || 'npc');
-                if (portraitMap[char.id]) {
-                    portraitSrc = portraitMap[char.id];
-                }
-
-                // Provide defaults for missing fields
-                const safeChar = {
-                    id: char.id,
-                    type: char.type || 'npc',
-                    name: char.name || 'Unknown Character',
-                    raceClass: char.raceClass || 'Unknown',
-                    player: char.player || '',
-                    level: char.level || 1,
-                    ac: char.ac || 10,
-                    initiative: char.initiative || '+0',
-                    deceased: Boolean(char.deceased),
-                    portrait: portraitSrc,
-                    background: char.background || ''
-                };
-
-                // Escape HTML in user-provided fields to prevent injection
-                const safeName = escapeHtml(safeChar.name);
-                const safePlayer = escapeHtml(safeChar.player);
-                const safeRaceClass = escapeHtml(safeChar.raceClass);
-                const safeType = escapeHtml(safeChar.type);
-
-                renderedCharacters.push(`
-                    <div class="character-card${safeChar.deceased ? ' deceased' : ''}" data-character-id="${safeChar.id}" data-type="${safeType}">
-                        <span class="character-type-badge ${safeType}">${safeType.toUpperCase()}</span>
-                        <div class="character-portrait">
-                            <img src="${escapeHtml(safeChar.portrait)}" alt="${safeName}" class="portrait-img" onerror="this.src='${getDefaultPortrait(safeChar.type)}'">
-                            <div class="level-badge">Lvl ${safeChar.level}</div>
-                        </div>
-                        <div class="character-info">
-                            <h3 class="char-name">${safeName}${safeChar.deceased ? ' <span class="deceased-tag">Deceased</span>' : ''}</h3>
-                            <p class="char-race-class">${safeRaceClass}</p>
-                            ${safePlayer ? `<p class="char-player">${safeType === 'pc' ? 'Player' : 'Controlled by'}: ${safePlayer}</p>` : ''}
-                            <div class="char-stats">
-                                <div class="stat-row">
-                                    <span class="mini-stat">AC: ${safeChar.ac}</span>
-                                    <span class="mini-stat">Init: ${escapeHtml(safeChar.initiative)}</span>
-                                </div>
-                            </div>
-                            <div class="char-background">
-                                <p class="background-text">${escapeHtml(stripHtml(safeChar.background)).substring(0, 150)}${safeChar.background && safeChar.background.length > 150 ? '...' : ''}</p>
-                            </div>
-                        </div>
-                        <div class="char-actions">
-                            <button class="btn btn-small" onclick="viewCharacter(${safeChar.id})">View</button>
-                            <button class="btn btn-small" onclick="openCharacterModal(${safeChar.id})">Edit</button>
-                        </div>
-                    </div>
-                `);
-            } catch (charError) {
-                console.error(`Error rendering character at index ${index}:`, char, charError);
-                // Skip this character but continue rendering others
-            }
-        });
-
-        grid.innerHTML = renderedCharacters.join('');
-
-        if (renderedCharacters.length === 0 && characters.length > 0) {
-            console.error('All characters failed to render. Check console for details.');
-            grid.innerHTML = '<div class="party-empty-state"><p>Error rendering characters. Please check the console for details.</p></div>';
+        // Render based on view mode and grouping
+        if (CharacterViewState.groupByType) {
+            await renderGroupedCharacters(pageCharacters, portraitMap);
+        } else {
+            await renderCharacterView(pageCharacters, portraitMap);
         }
+
+        // Update pagination controls
+        updatePaginationControls(CharacterViewState.currentPage, totalPages);
 
     } catch (error) {
         console.error('Critical error in renderCharacters:', error);
-        grid.innerHTML = '<div class="party-empty-state"><p>Critical error loading characters. Please refresh the page.</p></div>';
+        container.innerHTML = '<div class="party-empty-state"><p>Critical error loading characters. Please refresh the page.</p></div>';
+    }
+}
+
+function filterCharacters(characters) {
+    return characters.filter(char => {
+        if (!char || !char.id) return false;
+
+        // Search query
+        if (CharacterViewState.searchQuery) {
+            const query = CharacterViewState.searchQuery.toLowerCase();
+            const searchFields = [
+                char.name || '',
+                char.raceClass || '',
+                char.player || '',
+                char.species || '',
+                char.charClass || ''
+            ].map(f => f.toLowerCase());
+
+            if (!searchFields.some(field => field.includes(query))) {
+                return false;
+            }
+        }
+
+        // Type filter
+        if (CharacterViewState.typeFilter !== 'all' && char.type !== CharacterViewState.typeFilter) {
+            return false;
+        }
+
+        // Status filter
+        if (CharacterViewState.statusFilter === 'active' && char.deceased) {
+            return false;
+        }
+        if (CharacterViewState.statusFilter === 'deceased' && !char.deceased) {
+            return false;
+        }
+
+        // Level range filter
+        const level = char.level || 1;
+        if (CharacterViewState.levelMin && level < CharacterViewState.levelMin) {
+            return false;
+        }
+        if (CharacterViewState.levelMax && level > CharacterViewState.levelMax) {
+            return false;
+        }
+
+        // Controller filter
+        if (CharacterViewState.controllerFilter !== 'all') {
+            const controller = (char.player || '').trim();
+            if (controller !== CharacterViewState.controllerFilter) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+}
+
+function sortCharacters(characters) {
+    const sorted = [...characters];
+
+    switch (CharacterViewState.sortBy) {
+        case 'name-asc':
+            sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            break;
+        case 'name-desc':
+            sorted.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+            break;
+        case 'level-asc':
+            sorted.sort((a, b) => (a.level || 1) - (b.level || 1));
+            break;
+        case 'level-desc':
+            sorted.sort((a, b) => (b.level || 1) - (a.level || 1));
+            break;
+        case 'modified-desc':
+            sorted.sort((a, b) => {
+                const aTime = a.modifiedAt || a.createdAt || 0;
+                const bTime = b.modifiedAt || b.createdAt || 0;
+                return new Date(bTime) - new Date(aTime);
+            });
+            break;
+        case 'added-desc':
+            sorted.sort((a, b) => {
+                const aTime = a.createdAt || 0;
+                const bTime = b.createdAt || 0;
+                return new Date(bTime) - new Date(aTime);
+            });
+            break;
+    }
+
+    return sorted;
+}
+
+async function loadPortraitsLazy(characters) {
+    const portraitMap = {};
+
+    // Load only portraits that need IndexedDB access
+    const loadPromises = characters.map(async (char) => {
+        if (char.portrait && char.portrait.startsWith('indexeddb:')) {
+            try {
+                const portraitId = char.portrait.replace('indexeddb:', '');
+                const file = await FileStore.getFile(portraitId);
+                portraitMap[char.id] = file && file.data ? file.data : getDefaultPortrait(char.type || 'npc');
+            } catch (e) {
+                console.error('Failed to load portrait from IndexedDB:', e);
+                portraitMap[char.id] = getDefaultPortrait(char.type || 'npc');
+            }
+        }
+    });
+
+    await Promise.all(loadPromises);
+    return portraitMap;
+}
+
+async function renderCharacterView(characters, portraitMap) {
+    const container = document.getElementById('party-container');
+
+    switch (CharacterViewState.viewMode) {
+        case 'table':
+            container.innerHTML = renderTableView(characters, portraitMap);
+            container.className = 'party-container table-view';
+            break;
+        case 'list':
+            container.innerHTML = renderListView(characters, portraitMap);
+            container.className = 'party-container list-view';
+            break;
+        case 'card':
+        default:
+            container.innerHTML = renderCardView(characters, portraitMap);
+            container.className = `party-container card-view card-density-${CharacterViewState.cardDensity}`;
+            break;
+    }
+}
+
+async function renderGroupedCharacters(characters, portraitMap) {
+    const container = document.getElementById('party-container');
+
+    // Group characters by type
+    const pcs = characters.filter(c => c.type === 'pc');
+    const npcs = characters.filter(c => c.type === 'npc');
+
+    // Further group by status
+    const activePCs = pcs.filter(c => !c.deceased);
+    const activeNPCs = npcs.filter(c => !c.deceased);
+    const deceasedChars = characters.filter(c => c.deceased);
+
+    let html = '';
+
+    if (activePCs.length > 0) {
+        html += `
+            <div class="character-group">
+                <div class="group-header" onclick="toggleGroup(this)">
+                    <span class="group-icon">▼</span>
+                    <h3>Player Characters (${activePCs.length})</h3>
+                </div>
+                <div class="group-content">
+                    ${renderViewContent(activePCs, portraitMap)}
+                </div>
+            </div>
+        `;
+    }
+
+    if (activeNPCs.length > 0) {
+        html += `
+            <div class="character-group">
+                <div class="group-header" onclick="toggleGroup(this)">
+                    <span class="group-icon">▼</span>
+                    <h3>Active NPCs (${activeNPCs.length})</h3>
+                </div>
+                <div class="group-content">
+                    ${renderViewContent(activeNPCs, portraitMap)}
+                </div>
+            </div>
+        `;
+    }
+
+    if (deceasedChars.length > 0) {
+        html += `
+            <div class="character-group">
+                <div class="group-header collapsed" onclick="toggleGroup(this)">
+                    <span class="group-icon">▶</span>
+                    <h3>Deceased Characters (${deceasedChars.length})</h3>
+                </div>
+                <div class="group-content" style="display: none;">
+                    ${renderViewContent(deceasedChars, portraitMap)}
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+    container.className = `party-container grouped-view ${CharacterViewState.viewMode}-view ${CharacterViewState.viewMode === 'card' ? 'card-density-' + CharacterViewState.cardDensity : ''}`;
+}
+
+function renderViewContent(characters, portraitMap) {
+    switch (CharacterViewState.viewMode) {
+        case 'table':
+            return renderTableView(characters, portraitMap);
+        case 'list':
+            return renderListView(characters, portraitMap);
+        case 'card':
+        default:
+            return renderCardView(characters, portraitMap);
+    }
+}
+
+function renderCardView(characters, portraitMap) {
+    const cards = characters.map(char => {
+        const portraitSrc = portraitMap[char.id] || char.portrait || getDefaultPortrait(char.type || 'npc');
+        const safeChar = sanitizeCharacterForDisplay(char, portraitSrc);
+
+        return `
+            <div class="character-card${safeChar.deceased ? ' deceased' : ''}" data-character-id="${safeChar.id}" data-type="${safeChar.type}">
+                <span class="character-type-badge ${safeChar.type}">${safeChar.type.toUpperCase()}</span>
+                <div class="character-portrait">
+                    <img src="${safeChar.portrait}" alt="${safeChar.name}" class="portrait-img" loading="lazy" onerror="this.src='${getDefaultPortrait(safeChar.type)}'">
+                    <div class="level-badge">Lvl ${safeChar.level}</div>
+                </div>
+                <div class="character-info">
+                    <h3 class="char-name">${safeChar.name}${safeChar.deceased ? ' <span class="deceased-tag">Deceased</span>' : ''}</h3>
+                    <p class="char-race-class">${safeChar.raceClass}</p>
+                    ${safeChar.player ? `<p class="char-player">${safeChar.type === 'pc' ? 'Player' : 'Controlled by'}: ${safeChar.player}</p>` : ''}
+                    <div class="char-stats">
+                        <span class="mini-stat">AC: ${safeChar.ac}</span>
+                        <span class="mini-stat">Init: ${safeChar.initiative}</span>
+                    </div>
+                    ${CharacterViewState.cardDensity !== 'small' ? `
+                        <div class="char-background">
+                            <p class="background-text">${safeChar.backgroundPreview}</p>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="char-actions">
+                    <button class="btn btn-small" onclick="viewCharacter(${safeChar.id})">View</button>
+                    <button class="btn btn-small" onclick="openCharacterModal(${safeChar.id})">Edit</button>
+                </div>
+            </div>
+        `;
+    });
+
+    return `<div class="party-grid">${cards.join('')}</div>`;
+}
+
+function renderTableView(characters, portraitMap) {
+    const rows = characters.map(char => {
+        const portraitSrc = portraitMap[char.id] || char.portrait || getDefaultPortrait(char.type || 'npc');
+        const safeChar = sanitizeCharacterForDisplay(char, portraitSrc);
+
+        return `
+            <tr class="${safeChar.deceased ? 'deceased' : ''}" data-character-id="${safeChar.id}">
+                <td class="table-portrait">
+                    <img src="${safeChar.portrait}" alt="${safeChar.name}" loading="lazy" onerror="this.src='${getDefaultPortrait(safeChar.type)}'">
+                </td>
+                <td class="table-name">
+                    <strong>${safeChar.name}</strong>
+                    ${safeChar.deceased ? '<span class="deceased-tag-small">Deceased</span>' : ''}
+                </td>
+                <td class="table-type">
+                    <span class="type-badge-small ${safeChar.type}">${safeChar.type.toUpperCase()}</span>
+                </td>
+                <td>${safeChar.raceClass}</td>
+                <td>${safeChar.player}</td>
+                <td class="table-center">${safeChar.level}</td>
+                <td class="table-center">${safeChar.ac}</td>
+                <td class="table-center">${safeChar.initiative}</td>
+                <td class="table-actions">
+                    <button class="btn btn-small" onclick="viewCharacter(${safeChar.id})">View</button>
+                    <button class="btn btn-small" onclick="openCharacterModal(${safeChar.id})">Edit</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    return `
+        <div class="table-wrapper">
+            <table class="characters-table">
+                <thead>
+                    <tr>
+                        <th class="table-portrait"></th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Race/Class</th>
+                        <th>Controller</th>
+                        <th class="table-center">Level</th>
+                        <th class="table-center">AC</th>
+                        <th class="table-center">Init</th>
+                        <th class="table-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows.join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderListView(characters, portraitMap) {
+    const items = characters.map(char => {
+        const portraitSrc = portraitMap[char.id] || char.portrait || getDefaultPortrait(char.type || 'npc');
+        const safeChar = sanitizeCharacterForDisplay(char, portraitSrc);
+
+        return `
+            <div class="character-list-item${safeChar.deceased ? ' deceased' : ''}" data-character-id="${safeChar.id}">
+                <div class="list-portrait">
+                    <img src="${safeChar.portrait}" alt="${safeChar.name}" loading="lazy" onerror="this.src='${getDefaultPortrait(safeChar.type)}'">
+                    <div class="level-badge-small">Lv${safeChar.level}</div>
+                </div>
+                <div class="list-info">
+                    <div class="list-header">
+                        <h3 class="list-name">${safeChar.name}</h3>
+                        <span class="type-badge-small ${safeChar.type}">${safeChar.type.toUpperCase()}</span>
+                        ${safeChar.deceased ? '<span class="deceased-tag-small">Deceased</span>' : ''}
+                    </div>
+                    <p class="list-race-class">${safeChar.raceClass}</p>
+                    ${safeChar.player ? `<p class="list-player">${safeChar.type === 'pc' ? 'Player' : 'Controller'}: ${safeChar.player}</p>` : ''}
+                </div>
+                <div class="list-stats">
+                    <span class="mini-stat"><strong>AC:</strong> ${safeChar.ac}</span>
+                    <span class="mini-stat"><strong>Init:</strong> ${safeChar.initiative}</span>
+                </div>
+                <div class="list-actions">
+                    <button class="btn btn-small" onclick="viewCharacter(${safeChar.id})">View</button>
+                    <button class="btn btn-small" onclick="openCharacterModal(${safeChar.id})">Edit</button>
+                </div>
+            </div>
+        `;
+    });
+
+    return items.join('');
+}
+
+function sanitizeCharacterForDisplay(char, portraitSrc) {
+    const backgroundText = stripHtml(char.background || '');
+    const maxLength = CharacterViewState.cardDensity === 'large' ? 200 : 150;
+
+    return {
+        id: char.id,
+        type: escapeHtml(char.type || 'npc'),
+        name: escapeHtml(char.name || 'Unknown Character'),
+        raceClass: escapeHtml(char.raceClass || 'Unknown'),
+        player: escapeHtml(char.player || ''),
+        level: char.level || 1,
+        ac: char.ac || 10,
+        initiative: escapeHtml(char.initiative || '+0'),
+        deceased: Boolean(char.deceased),
+        portrait: escapeHtml(portraitSrc),
+        backgroundPreview: escapeHtml(backgroundText.substring(0, maxLength)) + (backgroundText.length > maxLength ? '...' : '')
+    };
+}
+
+function updateCharacterCount(filtered, total) {
+    const countEl = document.getElementById('character-count');
+    if (filtered === total) {
+        countEl.textContent = `${total} character${total !== 1 ? 's' : ''}`;
+    } else {
+        countEl.textContent = `${filtered} of ${total} character${total !== 1 ? 's' : ''}`;
+    }
+}
+
+function updatePaginationControls(currentPage, totalPages) {
+    const paginationEl = document.getElementById('pagination-controls');
+
+    if (totalPages <= 1) {
+        paginationEl.style.display = 'none';
+        return;
+    }
+
+    paginationEl.style.display = 'flex';
+    document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+    document.getElementById('prev-page').disabled = currentPage === 1;
+    document.getElementById('next-page').disabled = currentPage === totalPages;
+}
+
+function toggleGroup(header) {
+    const icon = header.querySelector('.group-icon');
+    const content = header.nextElementSibling;
+
+    if (header.classList.contains('collapsed')) {
+        header.classList.remove('collapsed');
+        icon.textContent = '▼';
+        content.style.display = '';
+    } else {
+        header.classList.add('collapsed');
+        icon.textContent = '▶';
+        content.style.display = 'none';
     }
 }
 
@@ -1875,15 +2246,302 @@ function stripHtml(html) {
     return tmp.textContent || tmp.innerText || '';
 }
 
+// ===================================
+// Character Controls Initialization
+// ===================================
+
 function initCharacterFilters() {
+    // Load saved preferences
+    CharacterViewState.load();
+
+    // Initialize view mode buttons
+    initViewModeButtons();
+
+    // Initialize card density buttons
+    initCardDensityButtons();
+
+    // Initialize search
+    initCharacterSearch();
+
+    // Initialize type filter
+    initTypeFilter();
+
+    // Initialize status filter
+    initStatusFilter();
+
+    // Initialize level filter
+    initLevelFilter();
+
+    // Initialize controller filter
+    initControllerFilter();
+
+    // Initialize sort
+    initSortControls();
+
+    // Initialize grouping toggle
+    initGroupingToggle();
+
+    // Initialize pagination
+    initPaginationControls();
+
+    // Apply initial state to UI
+    applyViewState();
+
+    // Render characters with saved preferences
+    renderCharacters();
+}
+
+function initViewModeButtons() {
+    const buttons = document.querySelectorAll('.view-mode-btn');
+    buttons.forEach(btn => {
+        if (btn.dataset.view === CharacterViewState.viewMode) {
+            btn.classList.add('active');
+        }
+
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            CharacterViewState.viewMode = btn.dataset.view;
+            CharacterViewState.save();
+
+            // Show/hide card density selector
+            const densitySelector = document.getElementById('card-density-selector');
+            if (CharacterViewState.viewMode === 'card') {
+                densitySelector.style.display = 'flex';
+            } else {
+                densitySelector.style.display = 'none';
+            }
+
+            renderCharacters();
+        });
+    });
+}
+
+function initCardDensityButtons() {
+    const buttons = document.querySelectorAll('.density-btn');
+    buttons.forEach(btn => {
+        if (btn.dataset.density === CharacterViewState.cardDensity) {
+            btn.classList.add('active');
+        }
+
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            CharacterViewState.cardDensity = btn.dataset.density;
+            CharacterViewState.save();
+            renderCharacters();
+        });
+    });
+}
+
+function initCharacterSearch() {
+    const searchInput = document.getElementById('character-search-input');
+    let searchTimeout;
+
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            CharacterViewState.searchQuery = e.target.value.trim();
+            CharacterViewState.currentPage = 1;
+            renderCharacters();
+        }, 300); // Debounce search
+    });
+}
+
+function initTypeFilter() {
     const filters = document.querySelectorAll('.character-filters .filter-btn');
     filters.forEach(btn => {
+        if (btn.dataset.filter === CharacterViewState.typeFilter) {
+            btn.classList.add('active');
+        }
+
         btn.addEventListener('click', () => {
             filters.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            renderCharacters(btn.dataset.filter);
+
+            CharacterViewState.typeFilter = btn.dataset.filter;
+            CharacterViewState.currentPage = 1;
+            renderCharacters();
         });
     });
+}
+
+function initStatusFilter() {
+    const filters = document.querySelectorAll('.status-filters .filter-btn');
+    filters.forEach(btn => {
+        if (btn.dataset.status === CharacterViewState.statusFilter) {
+            btn.classList.add('active');
+        }
+
+        btn.addEventListener('click', () => {
+            filters.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            CharacterViewState.statusFilter = btn.dataset.status;
+            CharacterViewState.currentPage = 1;
+            renderCharacters();
+        });
+    });
+}
+
+function initLevelFilter() {
+    const minInput = document.getElementById('level-min');
+    const maxInput = document.getElementById('level-max');
+
+    const applyLevelFilter = () => {
+        const min = parseInt(minInput.value) || null;
+        const max = parseInt(maxInput.value) || null;
+
+        CharacterViewState.levelMin = min;
+        CharacterViewState.levelMax = max;
+        CharacterViewState.currentPage = 1;
+        renderCharacters();
+    };
+
+    minInput.addEventListener('change', applyLevelFilter);
+    maxInput.addEventListener('change', applyLevelFilter);
+}
+
+function initControllerFilter() {
+    const select = document.getElementById('controller-filter');
+
+    // Populate controller options
+    populateControllerFilter();
+
+    select.addEventListener('change', (e) => {
+        CharacterViewState.controllerFilter = e.target.value;
+        CharacterViewState.currentPage = 1;
+        renderCharacters();
+    });
+}
+
+function populateControllerFilter() {
+    const select = document.getElementById('controller-filter');
+    const data = CampaignData.get();
+
+    if (!data || !Array.isArray(data.characters)) return;
+
+    // Get unique controllers
+    const controllers = new Set();
+    data.characters.forEach(char => {
+        if (char && char.player && char.player.trim()) {
+            controllers.add(char.player.trim());
+        }
+    });
+
+    // Clear existing options (except "All")
+    select.innerHTML = '<option value="all">All Controllers</option>';
+
+    // Add controller options
+    Array.from(controllers).sort().forEach(controller => {
+        const option = document.createElement('option');
+        option.value = controller;
+        option.textContent = controller;
+        select.appendChild(option);
+    });
+}
+
+function initSortControls() {
+    const select = document.getElementById('sort-select');
+    select.value = CharacterViewState.sortBy;
+
+    select.addEventListener('change', (e) => {
+        CharacterViewState.sortBy = e.target.value;
+        CharacterViewState.save();
+        renderCharacters();
+    });
+}
+
+function initGroupingToggle() {
+    const checkbox = document.getElementById('group-toggle');
+    checkbox.checked = CharacterViewState.groupByType;
+
+    checkbox.addEventListener('change', (e) => {
+        CharacterViewState.groupByType = e.target.checked;
+        CharacterViewState.save();
+        renderCharacters();
+    });
+}
+
+function initPaginationControls() {
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+
+    prevBtn.addEventListener('click', () => {
+        if (CharacterViewState.currentPage > 1) {
+            CharacterViewState.currentPage--;
+            renderCharacters();
+            scrollToTop();
+        }
+    });
+
+    nextBtn.addEventListener('click', () => {
+        CharacterViewState.currentPage++;
+        renderCharacters();
+        scrollToTop();
+    });
+}
+
+function applyViewState() {
+    // Apply view mode
+    document.querySelectorAll('.view-mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === CharacterViewState.viewMode);
+    });
+
+    // Show/hide card density
+    const densitySelector = document.getElementById('card-density-selector');
+    if (CharacterViewState.viewMode === 'card') {
+        densitySelector.style.display = 'flex';
+    } else {
+        densitySelector.style.display = 'none';
+    }
+
+    // Apply card density
+    document.querySelectorAll('.density-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.density === CharacterViewState.cardDensity);
+    });
+
+    // Apply sort
+    document.getElementById('sort-select').value = CharacterViewState.sortBy;
+
+    // Apply grouping
+    document.getElementById('group-toggle').checked = CharacterViewState.groupByType;
+}
+
+function clearCharacterFilters() {
+    // Reset all filters
+    CharacterViewState.searchQuery = '';
+    CharacterViewState.typeFilter = 'all';
+    CharacterViewState.statusFilter = 'all';
+    CharacterViewState.levelMin = null;
+    CharacterViewState.levelMax = null;
+    CharacterViewState.controllerFilter = 'all';
+    CharacterViewState.currentPage = 1;
+
+    // Reset UI
+    document.getElementById('character-search-input').value = '';
+    document.getElementById('level-min').value = '';
+    document.getElementById('level-max').value = '';
+    document.getElementById('controller-filter').value = 'all';
+
+    // Reset filter buttons
+    document.querySelectorAll('.character-filters .filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === 'all');
+    });
+    document.querySelectorAll('.status-filters .filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === 'all');
+    });
+
+    renderCharacters();
+}
+
+function scrollToTop() {
+    const container = document.getElementById('party-container');
+    if (container) {
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 // ===================================
