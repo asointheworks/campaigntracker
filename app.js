@@ -1763,7 +1763,13 @@ const CharacterViewState = {
         if (saved) {
             try {
                 const prefs = JSON.parse(saved);
-                Object.assign(this, prefs);
+                // Only load specific properties to avoid old filter values
+                if (prefs.viewMode) this.viewMode = prefs.viewMode;
+                if (prefs.cardDensity) this.cardDensity = prefs.cardDensity;
+                if (prefs.sortBy) this.sortBy = prefs.sortBy;
+                if (prefs.groupByType !== undefined) this.groupByType = prefs.groupByType;
+                if (prefs.itemsPerPage) this.itemsPerPage = prefs.itemsPerPage;
+                console.log('Loaded view preferences:', { viewMode: this.viewMode, cardDensity: this.cardDensity, sortBy: this.sortBy });
             } catch (e) {
                 console.error('Failed to load view preferences:', e);
             }
@@ -1804,9 +1810,19 @@ async function renderCharacters() {
         }
 
         let characters = data.characters;
+        console.log('Total characters before filtering:', characters.length);
+        console.log('Current filter state:', {
+            typeFilter: CharacterViewState.typeFilter,
+            statusFilter: CharacterViewState.statusFilter,
+            controllerFilter: CharacterViewState.controllerFilter,
+            levelMin: CharacterViewState.levelMin,
+            levelMax: CharacterViewState.levelMax,
+            searchQuery: CharacterViewState.searchQuery
+        });
 
         // Apply filters
         characters = filterCharacters(characters);
+        console.log('Characters after filtering:', characters.length);
 
         // Apply sorting
         characters = sortCharacters(characters);
@@ -2447,6 +2463,9 @@ function populateControllerFilter() {
         option.textContent = controller;
         select.appendChild(option);
     });
+
+    // Restore selected value to match state
+    select.value = CharacterViewState.controllerFilter;
 }
 
 function initSortControls() {
@@ -2514,6 +2533,20 @@ function applyViewState() {
 
     // Apply grouping
     document.getElementById('group-toggle').checked = CharacterViewState.groupByType;
+
+    // Apply filter states to UI
+    document.querySelectorAll('.character-filters .filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === CharacterViewState.typeFilter);
+    });
+
+    document.querySelectorAll('.status-filters .filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === CharacterViewState.statusFilter);
+    });
+
+    document.getElementById('character-search-input').value = CharacterViewState.searchQuery || '';
+    document.getElementById('level-min').value = CharacterViewState.levelMin || '';
+    document.getElementById('level-max').value = CharacterViewState.levelMax || '';
+    document.getElementById('controller-filter').value = CharacterViewState.controllerFilter;
 }
 
 function clearCharacterFilters() {
