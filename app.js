@@ -2251,6 +2251,12 @@ function stripHtml(html) {
 // ===================================
 
 function initCharacterFilters() {
+    // Check if required DOM elements exist
+    if (!document.getElementById('party-container')) {
+        console.warn('Character controls not found - skipping character filter initialization');
+        return;
+    }
+
     // Load saved preferences
     CharacterViewState.load();
 
@@ -3932,8 +3938,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCombatNPCForm();
     initPCTalesTabs();
 
-    // Render initial data
-    renderCharacters();
+    // Render initial data (renderCharacters is called within initCharacterFilters)
     renderTales();
     renderResources();
     renderAllPCTales();
