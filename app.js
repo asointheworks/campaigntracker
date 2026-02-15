@@ -101,12 +101,14 @@ function startFirestoreListener() {
             // Skip processing if this snapshot is from a local write that hasn't been confirmed yet
             // This prevents the listener from overwriting local changes before they're synced
             if (doc.metadata.hasPendingWrites) {
+                setSyncStatus('syncing');
                 return;
             }
 
             // Skip processing if we're currently in the middle of a local save operation
             // This prevents race conditions when multiple saves happen in quick succession
             if (_localSaveInProgress) {
+                setSyncStatus('syncing');
                 return;
             }
 
