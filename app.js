@@ -2892,7 +2892,7 @@ function renderAllPCTales() {
                         <div class="tale-preview">${stripHtml(tale.content).substring(0, 150)}...</div>
                     </div>
                     <div class="tale-actions">
-                        <button class="btn btn-small" onclick="readTale(${tale.id})">Read</button>
+                        <button class="btn btn-small" onclick="viewTale(${tale.id})">Read</button>
                         <button class="btn btn-small" onclick="editTale(${tale.id})">Edit</button>
                         <button class="btn btn-small btn-danger" onclick="deleteTale(${tale.id})">Delete</button>
                     </div>
